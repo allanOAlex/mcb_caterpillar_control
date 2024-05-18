@@ -1,9 +1,4 @@
 ﻿using GECA.Client.Console.Application.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Application.Abstractions.IServices
 {
@@ -12,7 +7,8 @@ namespace GECA.Client.Console.Application.Abstractions.IServices
         Task<char[,]> GenerateMapAsync(GenerateMapRequest generateMapRequest);
         Task<int> GetMapSize(char[,] map);
         void InitializeMap(char[,] map);
-        Task<char[,]> PlaceCaterpillar(char[,] map);
+        Task<PlaceCaterpillarResponse> PlaceCaterpillar(char[,] map);
+        Task<char[,]> PlaceCaterpillar(char[,] map, int row, int col);
         void PlaceItems(char[,] map, int itemCount, char itemSymbol);
         void PrintMap(char[,] map, int size);
         Task<string> GetMapAsString(char[,] map, int size);

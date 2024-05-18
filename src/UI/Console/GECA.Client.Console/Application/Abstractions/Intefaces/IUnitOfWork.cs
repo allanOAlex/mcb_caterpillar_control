@@ -1,9 +1,4 @@
 ﻿using GECA.Client.Console.Application.Abstractions.IRepositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Application.Abstractions.Intefaces
 {
@@ -11,7 +6,6 @@ namespace GECA.Client.Console.Application.Abstractions.Intefaces
     {
         ICaterpillarRepository CaterpillarRepository { get; }
         ISpiceRepository SpiceRepository { get; }
-        //ICacheRepository Cache { get; }
 
         Task<int> CompleteAsync();
     }

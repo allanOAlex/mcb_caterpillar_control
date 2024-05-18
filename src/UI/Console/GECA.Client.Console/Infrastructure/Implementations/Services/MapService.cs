@@ -1,11 +1,6 @@
 ﻿using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Abstractions.IServices;
 using GECA.Client.Console.Application.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Services
 {
@@ -89,7 +84,16 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             }
         }
 
-        public async Task<char[,]> PlaceCaterpillar(char[,] map)
+        public async Task<char[,]> PlaceCaterpillar(char[,] map, int row, int col)
+        {
+            row = map.GetLength(0) / 2;
+            row = map.GetLength(1) / 2;
+            map[row, col] = 'C';
+
+            return map;
+        }
+
+        public async Task<PlaceCaterpillarResponse> PlaceCaterpillar(char[,] map)
         {
             CaterpillarService caterpillarService = new(unitOfWork);
             var caterpillarRow = await caterpillarService.GetCaterpillarRow();
@@ -100,7 +104,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             caterpillarColumn = map.GetLength(1) / 2;
             map[caterpillarRow, caterpillarColumn] = 'C';
 
-            return map;
+            return new PlaceCaterpillarResponse
+            {
+                Row = caterpillarRow,
+                Column = caterpillarColumn,
+            };
         }
 
         public void PlaceItems(char[,] map, int itemCount, char itemSymbol)
@@ -150,7 +158,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
 
         public void RemoveItem(char[,] map, int row, int column)
         {
-            // Remove the item from the map
+            // Remove item from the map
             map[row, column] = '.';
         }
 
@@ -233,13 +241,13 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             }
         }
 
-        public async Task<ReplicateMapResponse> SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(ReplicateMapRequest replicateMapRequest)//char[,] map, int caterpillarRow, int caterpillarColumn, bool isHorizontalMirroring
+        public async Task<ReplicateMapResponse> SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(ReplicateMapRequest replicateMapRequest)
         {
             try
             {
                 int size = replicateMapRequest.Map.GetLength(0);
 
-                // Implement mirroring logic based on the flag
+                // Mirroring logic based on the flag
                 if (replicateMapRequest.IsHorizontalMirroring)
                 { 
                     // Reuse existing horizontal mirroring logic
@@ -255,7 +263,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 }
                 else
                 {
-                    // Implement vertical mirroring logic
+                    // Vertical mirroring logic
                     for (int i = 0; i < size / 2; i++)
                     {
                         for (int j = 0; j < size; j++)
@@ -360,5 +368,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             return i == 0 || i == size - 1;
         }
+
+        
     }
 }

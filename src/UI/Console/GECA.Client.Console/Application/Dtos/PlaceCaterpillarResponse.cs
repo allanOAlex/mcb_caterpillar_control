@@ -1,6 +1,6 @@
-﻿namespace GECA.Client.Console.Domain.Entities
+﻿namespace GECA.Client.Console.Application.Dtos
 {
-    public class Booster
+    public record PlaceCaterpillarResponse
     {
         public int Row { get; set; }
         public int Column { get; set; }

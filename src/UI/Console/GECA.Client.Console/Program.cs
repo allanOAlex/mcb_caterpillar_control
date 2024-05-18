@@ -4,45 +4,31 @@ using GECA.Client.Console.Application.Abstractions.IRepositories;
 using GECA.Client.Console.Application.Abstractions.IServices;
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Enums;
-using GECA.Client.Console.Infrastructure.Configs;
-using GECA.Client.Console.Infrastructure.Extensions;
-using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar;
 using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Infrastructure.Implementations.Repositories;
 using GECA.Client.Console.Infrastructure.Implementations.Services;
 using GECA.Client.Console.Shared;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Formatting.Json;
-using System.Globalization;
 
 
 
 #region SerilogConfig
 
-var loggingConfig = LoggingConfig.CreateDefaultConfig();
+string logFileName = "caterpillar_control_log.txt";
 
-// Configure Serilog using LoggingConfig
+string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, logFileName);
+
+// Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Is(loggingConfig.MinimumLevel)
-    // Use individual calls to MinimumLevel.Override for each key-value pair in OverrideLevels
-    .MinimumLevel.Override("System", loggingConfig.OverrideLevels["System"])
-    .MinimumLevel.Override("Serilog", loggingConfig.OverrideLevels["Serilog"])
-    .MinimumLevel.Override("Microsoft", loggingConfig.OverrideLevels["Microsoft"])
-    .Enrich.FromLogContext()
-    .Enrich.With(loggingConfig.Enrichers.ToArray())
-    .Filter.ByExcluding(loggingConfig.Filter)
-    .WriteTo.Async(s => s.File(new JsonFormatter(), loggingConfig.LogFile, rollingInterval: RollingInterval.Day))
+    .MinimumLevel.Information()
+    .WriteTo.Async(s => s.File(new JsonFormatter(), "caterpillar_control_log.txt", rollingInterval: RollingInterval.Day))
     .CreateLogger();
 
 #endregion
 
-
 ICaterpillarRepository caterpillarRepository = new InMemoryCaterpillarRepository();
 ISpiceRepository spiceRepository = new InMemorySpiceRepository();
-//ICacheRepository cacheRepository = new CacheRepository(cache);
 IUnitOfWork unitOfWork = new UnitOfWork(caterpillarRepository, spiceRepository);
 ICaterpillarService caterpillarService = new CaterpillarService(unitOfWork);
 IMapService mapService = new MapService(unitOfWork);
@@ -114,6 +100,8 @@ while (true)
         
     };
 
+    
+
     // Move the caterpillar and print the updated map
     await simulation.MoveCaterpillar(moveCaterpillarRequest);
 
@@ -148,6 +136,7 @@ public class CaterpillarSimulation
     private readonly IServiceManager serviceManager;
     private readonly ICaterpillarService caterpillarService;
     private readonly IMapService mapService;
+    private readonly string logFilePath;
 
 
     public CaterpillarSimulation(IServiceManager ServiceManager)
@@ -163,7 +152,8 @@ public class CaterpillarSimulation
         collectedSpices = new List<CollectedSpice>();
         caterpillarDestroyed = false;
         isHorizontalMirroring = false;
-        
+        logFilePath = "caterpillar_control_log.txt";
+
         PlaceCaterpillar(map);
     }
 
@@ -180,35 +170,13 @@ public class CaterpillarSimulation
         }
     }
 
-    private static void PlaceCaterpillar(char[,] map)
+    private async Task<PlaceCaterpillarResponse> PlaceCaterpillar(char[,] map)
     {
-        try
-        {
-            // Place the caterpillar at the center of the map
-            caterpillarRow = map.GetLength(0) / 2;
-            caterpillarColumn = map.GetLength(1) / 2;
-            map[caterpillarRow, caterpillarColumn] = 'C';
 
-            PlaceCaterpillarOnMapCommand placeCaterpillarCommand = new(map, caterpillarRow, caterpillarColumn, 0, 0, string.Empty, 0);
-            placeCaterpillarCommand.Execute();
-
-            Log.Information("ICaterpillar Placement: {CaterpillarRow} {CaterpillarColumn} {Time}", caterpillarRow, caterpillarColumn, DateTime.Now.ToString("T", new CultureInfo("en-GB")));
-
-            //Log.Information("Caterpillar Placement: " +
-            //    "Initial Row - {CaterpillarRow}, " +
-            //    "Initial Column - {CaterpillarColumn}, " +
-            //    "Time - {Time}",
-            //    caterpillarRow,
-            //    caterpillarColumn,
-            //    DateTime.Now.ToString("T", new CultureInfo("en-GB")));
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
-
-        
+        var serviceResponse = await serviceManager.MapService.PlaceCaterpillar(map);
+        caterpillarRow = serviceResponse.Row;
+        caterpillarColumn = serviceResponse.Column;
+        return serviceResponse;
 
     }
 
@@ -261,10 +229,22 @@ public class CaterpillarSimulation
         moveCaterpillarRequest.CurrentColumn = caterpillarColumn;
 
         var serviceResponse = await serviceManager.CaterpillarService.MoveCaterpillar(map, moveCaterpillarRequest);
+
+        Log.Information("Caterpillar Movement: " +
+            "{DateTime}: {Direction}: {Steps}: " +
+            "{PreviousRow}: {PreviousCol}: " +
+            "{CurrentRow}: {CurrentCol}:",
+            DateTime.Now, moveCaterpillarRequest.Direction, moveCaterpillarRequest.Steps,
+            caterpillarRow, caterpillarColumn,
+            serviceResponse.NewCatapillarRow, serviceResponse.NewCatapillarColumn
+            );
+
         caterpillarRow = serviceResponse.NewCatapillarRow;
-        caterpillarColumn = serviceResponse.NewCatapillarColumn;
+        caterpillarColumn = caterpillarColumn;
         AppConstants.CurrentCaterpillarRow = serviceResponse.NewCatapillarRow;
         AppConstants.CurrentCaterpillarColumn = serviceResponse.NewCatapillarColumn;
+
+        
 
         switch (serviceResponse.EventType)
         {
@@ -385,7 +365,6 @@ public class CaterpillarSimulation
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Crossing Boundaries!!");
 
-                // Determine mirroring direction based on the event type
                 isHorizontalMirroring = serviceResponse.EventType == EventType.HorizontalCrossBoundary ? true : false;
 
                 ReplicateMapRequest replicateMapRequest = new()
@@ -396,7 +375,6 @@ public class CaterpillarSimulation
                     IsHorizontalMirroring = isHorizontalMirroring,
                 };
 
-                // Call appropriate mirroring method (assuming they exist)
                 var replicateMapResponse = await serviceManager.MapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(replicateMapRequest);
 
                 if (isHorizontalMirroring)
