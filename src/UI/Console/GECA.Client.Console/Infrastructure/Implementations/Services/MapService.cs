@@ -89,7 +89,16 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             }
         }
 
-        public async Task<char[,]> PlaceCaterpillar(char[,] map)
+        public async Task<char[,]> PlaceCaterpillar(char[,] map, int row, int col)
+        {
+            row = map.GetLength(0) / 2;
+            row = map.GetLength(1) / 2;
+            map[row, col] = 'C';
+
+            return map;
+        }
+
+        public async Task<PlaceCaterpillarResponse> PlaceCaterpillar(char[,] map)
         {
             CaterpillarService caterpillarService = new(unitOfWork);
             var caterpillarRow = await caterpillarService.GetCaterpillarRow();
@@ -100,7 +109,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             caterpillarColumn = map.GetLength(1) / 2;
             map[caterpillarRow, caterpillarColumn] = 'C';
 
-            return map;
+            return new PlaceCaterpillarResponse
+            {
+                Row = caterpillarRow,
+                Column = caterpillarColumn,
+            };
         }
 
         public void PlaceItems(char[,] map, int itemCount, char itemSymbol)
@@ -360,5 +373,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             return i == 0 || i == size - 1;
         }
+
+        
     }
 }

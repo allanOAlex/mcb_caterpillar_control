@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
+using GECA.Client.Console.Application.Abstractions.ICommand;
 using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Abstractions.IServices;
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
+using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar;
+using GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers;
 using GECA.Client.Console.Shared;
 using System;
 using System.Collections.Generic;
@@ -22,6 +25,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         private bool caterpillarDestroyed; // Flag to indicate if caterpillar is destroyed
         private List<CollectedSpice> CollectedSpices; // Collection to store encountered spices
         private List<Spice> SpiceList; // Collection to store encountered spices
+        
 
         private readonly IUnitOfWork unitOfWork;
 
@@ -33,6 +37,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             SpiceList = new();
             caterpillarDestroyed = false;
             unitOfWork = UnitOfWork;
+            
         }
 
 
@@ -74,6 +79,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             try
             {
+                
                 int newRow = moveCaterpillarRequest.CurrentRow;
                 int newColumn = moveCaterpillarRequest.CurrentColumn;
 

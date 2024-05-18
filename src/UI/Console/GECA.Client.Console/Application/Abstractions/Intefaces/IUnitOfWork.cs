@@ -11,7 +11,6 @@ namespace GECA.Client.Console.Application.Abstractions.Intefaces
     {
         ICaterpillarRepository CaterpillarRepository { get; }
         ISpiceRepository SpiceRepository { get; }
-        //ICacheRepository Cache { get; }
 
         Task<int> CompleteAsync();
     }

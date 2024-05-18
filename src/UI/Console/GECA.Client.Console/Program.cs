@@ -7,10 +7,12 @@ using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Configs;
 using GECA.Client.Console.Infrastructure.Extensions;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar;
+using GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers;
 using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Infrastructure.Implementations.Repositories;
 using GECA.Client.Console.Infrastructure.Implementations.Services;
 using GECA.Client.Console.Shared;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +40,6 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 #endregion
-
 
 ICaterpillarRepository caterpillarRepository = new InMemoryCaterpillarRepository();
 ISpiceRepository spiceRepository = new InMemorySpiceRepository();
@@ -148,6 +149,7 @@ public class CaterpillarSimulation
     private readonly IServiceManager serviceManager;
     private readonly ICaterpillarService caterpillarService;
     private readonly IMapService mapService;
+    private readonly string logFilePath;
 
 
     public CaterpillarSimulation(IServiceManager ServiceManager)
@@ -163,7 +165,8 @@ public class CaterpillarSimulation
         collectedSpices = new List<CollectedSpice>();
         caterpillarDestroyed = false;
         isHorizontalMirroring = false;
-        
+        logFilePath = "caterpillar_control_log.txt";
+
         PlaceCaterpillar(map);
     }
 
@@ -180,35 +183,13 @@ public class CaterpillarSimulation
         }
     }
 
-    private static void PlaceCaterpillar(char[,] map)
+    private async Task<PlaceCaterpillarResponse> PlaceCaterpillar(char[,] map)
     {
-        try
-        {
-            // Place the caterpillar at the center of the map
-            caterpillarRow = map.GetLength(0) / 2;
-            caterpillarColumn = map.GetLength(1) / 2;
-            map[caterpillarRow, caterpillarColumn] = 'C';
 
-            PlaceCaterpillarOnMapCommand placeCaterpillarCommand = new(map, caterpillarRow, caterpillarColumn, 0, 0, string.Empty, 0);
-            placeCaterpillarCommand.Execute();
-
-            Log.Information("ICaterpillar Placement: {CaterpillarRow} {CaterpillarColumn} {Time}", caterpillarRow, caterpillarColumn, DateTime.Now.ToString("T", new CultureInfo("en-GB")));
-
-            //Log.Information("Caterpillar Placement: " +
-            //    "Initial Row - {CaterpillarRow}, " +
-            //    "Initial Column - {CaterpillarColumn}, " +
-            //    "Time - {Time}",
-            //    caterpillarRow,
-            //    caterpillarColumn,
-            //    DateTime.Now.ToString("T", new CultureInfo("en-GB")));
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
-
-        
+        var serviceResponse = await serviceManager.MapService.PlaceCaterpillar(map);
+        caterpillarRow = serviceResponse.Row;
+        caterpillarColumn = serviceResponse.Column;
+        return serviceResponse;
 
     }
 
