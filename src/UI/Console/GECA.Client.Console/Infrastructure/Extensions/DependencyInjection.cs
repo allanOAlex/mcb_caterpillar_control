@@ -5,23 +5,15 @@ using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Infrastructure.Implementations.Repositories;
 using GECA.Client.Console.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
-using Serilog.Formatting.Compact;
 using Serilog.Formatting.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Extensions
 {

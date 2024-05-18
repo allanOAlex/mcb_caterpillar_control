@@ -1,11 +1,6 @@
 ﻿using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Abstractions.IServices;
 using GECA.Client.Console.Application.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Services
 {

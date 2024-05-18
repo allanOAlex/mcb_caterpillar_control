@@ -1,12 +1,6 @@
 ﻿using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Abstractions.IRepositories;
 using GECA.Client.Console.Persistence.DataContext;
-using Microsoft.Extensions.Caching.Memory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Interfaces
 {

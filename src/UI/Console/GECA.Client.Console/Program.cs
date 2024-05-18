@@ -4,46 +4,31 @@ using GECA.Client.Console.Application.Abstractions.IRepositories;
 using GECA.Client.Console.Application.Abstractions.IServices;
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Enums;
-using GECA.Client.Console.Infrastructure.Configs;
-using GECA.Client.Console.Infrastructure.Extensions;
-using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar;
-using GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers;
 using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Infrastructure.Implementations.Repositories;
 using GECA.Client.Console.Infrastructure.Implementations.Services;
 using GECA.Client.Console.Shared;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Formatting.Json;
-using System.Globalization;
 
 
 
 #region SerilogConfig
 
-var loggingConfig = LoggingConfig.CreateDefaultConfig();
+string logFileName = "caterpillar_control_log.txt";
 
-// Configure Serilog using LoggingConfig
+string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, logFileName);
+
+// Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Is(loggingConfig.MinimumLevel)
-    // Use individual calls to MinimumLevel.Override for each key-value pair in OverrideLevels
-    .MinimumLevel.Override("System", loggingConfig.OverrideLevels["System"])
-    .MinimumLevel.Override("Serilog", loggingConfig.OverrideLevels["Serilog"])
-    .MinimumLevel.Override("Microsoft", loggingConfig.OverrideLevels["Microsoft"])
-    .Enrich.FromLogContext()
-    .Enrich.With(loggingConfig.Enrichers.ToArray())
-    .Filter.ByExcluding(loggingConfig.Filter)
-    .WriteTo.Async(s => s.File(new JsonFormatter(), loggingConfig.LogFile, rollingInterval: RollingInterval.Day))
+    .MinimumLevel.Information()
+    .WriteTo.Async(s => s.File(new JsonFormatter(), "caterpillar_control_log.txt", rollingInterval: RollingInterval.Day))
     .CreateLogger();
 
 #endregion
 
 ICaterpillarRepository caterpillarRepository = new InMemoryCaterpillarRepository();
 ISpiceRepository spiceRepository = new InMemorySpiceRepository();
-//ICacheRepository cacheRepository = new CacheRepository(cache);
 IUnitOfWork unitOfWork = new UnitOfWork(caterpillarRepository, spiceRepository);
 ICaterpillarService caterpillarService = new CaterpillarService(unitOfWork);
 IMapService mapService = new MapService(unitOfWork);
@@ -114,6 +99,8 @@ while (true)
         Steps = steps,
         
     };
+
+    
 
     // Move the caterpillar and print the updated map
     await simulation.MoveCaterpillar(moveCaterpillarRequest);
@@ -242,10 +229,22 @@ public class CaterpillarSimulation
         moveCaterpillarRequest.CurrentColumn = caterpillarColumn;
 
         var serviceResponse = await serviceManager.CaterpillarService.MoveCaterpillar(map, moveCaterpillarRequest);
+
+        Log.Information("Caterpillar Movement: " +
+            "{DateTime}: {Direction}: {Steps}: " +
+            "{PreviousRow}: {PreviousCol}: " +
+            "{CurrentRow}: {CurrentCol}:",
+            DateTime.Now, moveCaterpillarRequest.Direction, moveCaterpillarRequest.Steps,
+            caterpillarRow, caterpillarColumn,
+            serviceResponse.NewCatapillarRow, serviceResponse.NewCatapillarColumn
+            );
+
         caterpillarRow = serviceResponse.NewCatapillarRow;
-        caterpillarColumn = serviceResponse.NewCatapillarColumn;
+        caterpillarColumn = caterpillarColumn;
         AppConstants.CurrentCaterpillarRow = serviceResponse.NewCatapillarRow;
         AppConstants.CurrentCaterpillarColumn = serviceResponse.NewCatapillarColumn;
+
+        
 
         switch (serviceResponse.EventType)
         {
