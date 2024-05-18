@@ -365,7 +365,6 @@ public class CaterpillarSimulation
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Crossing Boundaries!!");
 
-                // Determine mirroring direction based on the event type
                 isHorizontalMirroring = serviceResponse.EventType == EventType.HorizontalCrossBoundary ? true : false;
 
                 ReplicateMapRequest replicateMapRequest = new()
@@ -376,7 +375,6 @@ public class CaterpillarSimulation
                     IsHorizontalMirroring = isHorizontalMirroring,
                 };
 
-                // Call appropriate mirroring method (assuming they exist)
                 var replicateMapResponse = await serviceManager.MapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(replicateMapRequest);
 
                 if (isHorizontalMirroring)

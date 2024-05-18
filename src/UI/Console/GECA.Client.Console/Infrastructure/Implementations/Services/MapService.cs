@@ -158,7 +158,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
 
         public void RemoveItem(char[,] map, int row, int column)
         {
-            // Remove the item from the map
+            // Remove item from the map
             map[row, column] = '.';
         }
 
@@ -241,13 +241,13 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             }
         }
 
-        public async Task<ReplicateMapResponse> SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(ReplicateMapRequest replicateMapRequest)//char[,] map, int caterpillarRow, int caterpillarColumn, bool isHorizontalMirroring
+        public async Task<ReplicateMapResponse> SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(ReplicateMapRequest replicateMapRequest)
         {
             try
             {
                 int size = replicateMapRequest.Map.GetLength(0);
 
-                // Implement mirroring logic based on the flag
+                // Mirroring logic based on the flag
                 if (replicateMapRequest.IsHorizontalMirroring)
                 { 
                     // Reuse existing horizontal mirroring logic
@@ -263,7 +263,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 }
                 else
                 {
-                    // Implement vertical mirroring logic
+                    // Vertical mirroring logic
                     for (int i = 0; i < size / 2; i++)
                     {
                         for (int j = 0; j < size; j++)
