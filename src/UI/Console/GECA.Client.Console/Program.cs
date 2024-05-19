@@ -1,9 +1,12 @@
 ﻿
+using GECA.Client.Console.Application.Abstractions.ICommand;
 using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Abstractions.IRepositories;
 using GECA.Client.Console.Application.Abstractions.IServices;
 using GECA.Client.Console.Application.Dtos;
+using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
+using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar;
 using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Infrastructure.Implementations.Repositories;
 using GECA.Client.Console.Infrastructure.Implementations.Services;
@@ -47,6 +50,7 @@ char[,] asyncMap = await caterpillarSimulation.GenerateMapAsync(new GenerateMapR
     BoosterCount = 3,
     SpiceCount = 2
 });
+
 
 CaterpillarSimulation simulation = new CaterpillarSimulation(asyncMap, serviceManager);
 
@@ -93,27 +97,21 @@ while (true)
         continue;
     }
 
-    MoveCaterpillarRequest moveCaterpillarRequest = new()
+    AppConstants.Direction = direction;
+    AppConstants.Steps = steps;
+
+    await simulation.MoveCaterpillar(new MoveCaterpillarRequest
     {
         Direction = direction,
         Steps = steps,
-        
-    };
+    });
 
-    
-
-    // Move the caterpillar and print the updated map
-    await simulation.MoveCaterpillar(moveCaterpillarRequest);
-
-    // Clear the console before reprinting the map
     Console.Clear();
-
-    // Print the updated map
     simulation.PrintMap(asyncMap, size);
-
     simulation.DisplayRadar(asyncMap, AppConstants.CurrentCaterpillarRow, AppConstants.CurrentCaterpillarColumn, AppConstants.RadarRange);
+
     moveCount++;
-    if (moveCount >= 100) // Set your desired maximum number of moves
+    if (moveCount >= 100)
     {
         Console.WriteLine("Reached maximum number of moves (100). Simulation ending.");
         await Task.Delay(1000);
@@ -126,9 +124,9 @@ while (true)
 
 public class CaterpillarSimulation
 {
-    private readonly char[,] map;
-    private static int caterpillarRow;
-    private static int caterpillarColumn;
+    public readonly char[,] map;
+    public static int caterpillarRow;
+    public static int caterpillarColumn;
     private List<CollectedSpice> collectedSpices; // Collection to store encountered spices
     private bool caterpillarDestroyed; // Flag to indicate if caterpillar is destroyed
     private bool isHorizontalMirroring; // Flag to indicate type of map mirroring
@@ -137,16 +135,14 @@ public class CaterpillarSimulation
     private readonly ICaterpillarService caterpillarService;
     private readonly IMapService mapService;
     private readonly string logFilePath;
-
-
-    public CaterpillarSimulation(IServiceManager ServiceManager)
-    {
-            serviceManager = ServiceManager;
-    }
+    public Caterpillar Caterpillar;
+    private Stack<ICommand> commandHistory = new();
+    private Stack<ICommandGeneric> commandHistoryGeneric = new();
 
     public CaterpillarSimulation(char[,] asyncMap, IServiceManager ServiceManager)
     {
         serviceManager = ServiceManager;
+        Caterpillar = new Caterpillar();
 
         map = asyncMap;
         collectedSpices = new List<CollectedSpice>();
@@ -155,6 +151,11 @@ public class CaterpillarSimulation
         logFilePath = "caterpillar_control_log.txt";
 
         PlaceCaterpillar(map);
+    }
+
+    public CaterpillarSimulation(IServiceManager ServiceManager)
+    {
+        serviceManager = ServiceManager;
     }
 
     public async Task<char[,]> GenerateMapAsync(GenerateMapRequest generateMapRequest)
@@ -240,11 +241,9 @@ public class CaterpillarSimulation
             );
 
         caterpillarRow = serviceResponse.NewCatapillarRow;
-        caterpillarColumn = caterpillarColumn;
+        caterpillarColumn = serviceResponse.NewCatapillarRow;
         AppConstants.CurrentCaterpillarRow = serviceResponse.NewCatapillarRow;
         AppConstants.CurrentCaterpillarColumn = serviceResponse.NewCatapillarColumn;
-
-        
 
         switch (serviceResponse.EventType)
         {
@@ -293,13 +292,12 @@ public class CaterpillarSimulation
 
                 if (grow || shrink)
                 {
-                    GrowShrinkCaterpillarRequest growShrinkCaterpillarRequest = new()
+                    AppConstants.GrowOrShrink = grow ? true : false;
+                    var growShrinkResponse = await serviceManager.CaterpillarService.GrowShrinkCaterpillar(new GrowShrinkCaterpillarRequest
                     {
-                        Caterpillar = new CaterpillarDto() { Caterpillar = new()},
-                        Grow = grow
-                    };
-                    
-                    var growShrinkResponse = await serviceManager.CaterpillarService.GrowShrinkCaterpillar(growShrinkCaterpillarRequest);
+                        Caterpillar = new CaterpillarDto() { Caterpillar = new() },
+                        Grow = AppConstants.GrowOrShrink
+                    });
 
                     if (growShrinkResponse.Successful)
                     {
@@ -402,12 +400,6 @@ public class CaterpillarSimulation
 
     }
 
-    private void RemoveItem(int row, int column)
-    {
-        // Remove the item from the map
-        map[row, column] = '.';
-    }
-
     public void DisplayRadar(char[,] map, int caterpillarRow, int caterpillarColumn, int radarRange)
     {
         Console.WriteLine("Radar Display:");
@@ -445,6 +437,39 @@ public class CaterpillarSimulation
                 }
             }
             Console.WriteLine(); // Move to the next row
+        }
+    }
+
+    public async Task MoveCaterpillarAsync(ICommand command)
+    {
+        await command.ExecuteAsync(this);
+        commandHistory.Push(command);
+    }
+
+    public void Move(Direction direction, IServiceManager serviceManager)
+    {
+        var command = new MoveCommand(this, serviceManager);
+        ExecuteCommandGeneric(command);
+    }
+
+    public void ExecuteCommand(ICommand command)
+    {
+        command.ExecuteAsync(this);
+        commandHistory.Push(command);
+    }
+
+    public void ExecuteCommandGeneric(ICommandGeneric command)
+    {
+        command.Execute();
+        commandHistoryGeneric.Push(command);
+    }
+
+    public void UndoLastCommand()
+    {
+        if (commandHistory.Count > 0)
+        {
+            var lastCommand = commandHistory.Pop();
+            lastCommand.UndoAsync(this);
         }
     }
 

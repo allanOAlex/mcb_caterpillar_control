@@ -158,6 +158,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
 
         public void RemoveItem(char[,] map, int row, int column)
         {
+            
             // Remove item from the map
             map[row, column] = '.';
         }

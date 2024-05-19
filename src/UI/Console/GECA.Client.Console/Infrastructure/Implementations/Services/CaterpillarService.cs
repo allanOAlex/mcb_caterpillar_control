@@ -51,6 +51,25 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             
         }
 
+        public async Task<bool> UnDestroyCaterpillar(char[,] map, int row, int column)
+        {
+            try
+            {
+                caterpillarDestroyed = true;
+
+                // Remove the caterpillar from the map
+                map[row, column] = '.';
+
+                return true;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+        }
+
         public async Task<int> GetCaterpillarColumn()
         {
             return caterpillarColumn;
