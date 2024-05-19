@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Infrastructure\Implementations\Commands\Log\" />
+    <Folder Include="Infrastructure\Helpers\" />
   </ItemGroup>
 
 </Project>

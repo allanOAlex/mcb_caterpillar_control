@@ -4,7 +4,7 @@ namespace GECA.Client.Console.Application.Abstractions.ICommand
 {
     public interface ICommand
     {
-        void Execute(CaterpillarState state);
-        void Undo(CaterpillarState state);
+        Task ExecuteAsync(CaterpillarSimulation simulation);
+        Task UndoAsync(CaterpillarSimulation simulation);
     }
 }
