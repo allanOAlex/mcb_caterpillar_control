@@ -5,6 +5,7 @@ using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
 using GECA.Client.Console.Shared;
+using Serilog;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
@@ -18,6 +19,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         {
             try
             {
+                SaveCurrentState();
+
                 // Handle movement logic (call service methods, update state)
                 var response = await serviceManager.CaterpillarService.MoveCaterpillar(map, new MoveCaterpillarRequest
                 {
@@ -40,9 +43,9 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     HandleEventType(response);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Log.Error(ex, "{DateTime}: {CommandType} execution failed", DateTime.Now, this.GetType().Name);
                 throw;
             }
         }
@@ -72,11 +75,27 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                 case EventType.Spice:
                     serviceManager.CaterpillarService.CollectAndStoreSpice(response.NewCatapillarRow, response.NewCatapillarColumn).Wait();
                     break;
+
+                case EventType.HorizontalCrossBoundary:
+                case EventType.VerticalCrossBoundary:
+                    serviceManager.MapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(new ReplicateMapRequest
+                    {
+                        Map = map,
+                        CaterpillarRow = response.NewCatapillarRow,
+                        CaterpillarColumn = response.NewCatapillarColumn,
+                        IsHorizontalMirroring = response.EventType == EventType.HorizontalCrossBoundary ? true : false
+                    });
+                    break;
+
+                case EventType.HitMapBoundary:
+                    map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
+                    break;
                 default:
                     break;
             }
-        }
 
+            LogCommand("MoveUp", eventType);
+        }
 
         public override async Task UndoAsync(CaterpillarSimulation simulation)
         {

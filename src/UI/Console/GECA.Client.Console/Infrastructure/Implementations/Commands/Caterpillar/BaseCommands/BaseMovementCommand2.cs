@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {
-    public abstract class BaseCaterpillarMovementCommand : IBaseCaterpillarMovementCommand
+    public abstract class BaseMovementCommand2 : ICommand2
     {
         protected Domain.Entities.Caterpillar caterpillar;
         protected char[,] map;
@@ -25,7 +25,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected List<Segment> previousSegments;
         protected List<Segment> newSegments;
 
-        public BaseCaterpillarMovementCommand(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest MoveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
+        public BaseMovementCommand2(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest MoveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
         {
             this.caterpillar = caterpillar;
             this.map = map;
@@ -53,6 +53,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             {
                 case EventType.Obstacle:
                     await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
+
                     break;
                 case EventType.Booster:
                     // Revert the caterpillar size change
@@ -66,8 +67,26 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     }
                     map[previousRow, previousColumn] = 'B';
                     break;
+
                 case EventType.Spice:
                     map[previousRow, previousColumn] = 'S';
+                    break;
+
+                case EventType.HorizontalCrossBoundary:
+                case EventType.VerticalCrossBoundary:
+                    
+                    // Handle reverting boundary crossing by replicating the map back to its original state
+                    await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(new ReplicateMapRequest
+                    {
+                        Map = map,
+                        CaterpillarRow = previousRow,
+                        CaterpillarColumn = previousColumn,
+                        IsHorizontalMirroring = eventType == EventType.HorizontalCrossBoundary ? true : false,
+                    });
+                    break;
+
+                case EventType.HitMapBoundary:
+                    // Simply restoring the previous state might be enough
                     break;
             }
 

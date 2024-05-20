@@ -42,6 +42,7 @@ IServiceManager serviceManager = new ServiceManager(caterpillarService, mapServi
 
 CaterpillarSimulation caterpillarSimulation = new CaterpillarSimulation(serviceManager);
 
+
 // Generate the map asynchronously
 char[,] asyncMap = await caterpillarSimulation.GenerateMapAsync(new GenerateMapRequest
 {
@@ -137,8 +138,15 @@ public class CaterpillarSimulation
     private readonly string logFilePath;
     public Caterpillar Caterpillar;
     private Stack<ICommand> commandHistory = new();
-    private Stack<ICommandGeneric> commandHistoryGeneric = new();
-    private Stack<IBaseCaterpillarMovementCommand> moveCommandHistory = new();
+    private Stack<ICommand1> commandHistoryGeneric = new();
+    private Stack<ICommand2> moveCommandHistory = new();
+
+    public event Action ObstacleEncountered;
+    public event Action BoosterEncountered;
+    public event Action SpiceCollected;
+    public event Action BoundaryCrossed;
+    public event Action BoundaryHit;
+    public event Action<string> GrowShrinkDecisionRequested;
 
     public CaterpillarSimulation(char[,] asyncMap, IServiceManager ServiceManager)
     {
@@ -585,14 +593,14 @@ public class CaterpillarSimulation
         commandHistory.Push(command);
     }
 
-    public async Task<MoveCaterpillarResponse> ExecuteMoveCommand(IBaseCaterpillarMovementCommand command)
+    public async Task<MoveCaterpillarResponse> ExecuteMoveCommand(ICommand2 command)
     {
         var serviceResponse =  await command.ExecuteAsync();
         moveCommandHistory.Push(command);
         return serviceResponse;
     }
 
-    public void ExecuteCommandGeneric(ICommandGeneric command)
+    public void ExecuteCommandGeneric(ICommand1 command)
     {
         command.Execute();
         commandHistoryGeneric.Push(command);
@@ -607,7 +615,7 @@ public class CaterpillarSimulation
         }
     }
 
-    private void LogCommand(IBaseCaterpillarMovementCommand command)
+    private void LogCommand(ICommand2 command)
     {
         command.LogCommandDetails(); 
     }
