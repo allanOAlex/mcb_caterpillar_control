@@ -59,6 +59,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     {
                         simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
                     }
+                    map[previousRow, previousColumn] = 'B';
                     break;
                 case EventType.Spice:
                     map[previousRow, previousColumn] = 'S';
