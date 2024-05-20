@@ -4,6 +4,7 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Shared;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Services
 {
@@ -49,6 +50,25 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 throw;
             }
             
+        }
+
+        public async Task<bool> UnDestroyCaterpillar(char[,] map, int row, int column)
+        {
+            try
+            {
+                caterpillarDestroyed = true;
+
+                // Remove the caterpillar from the map
+                map[row, column] = 'C';
+
+                return true;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
 
         public async Task<int> GetCaterpillarColumn()

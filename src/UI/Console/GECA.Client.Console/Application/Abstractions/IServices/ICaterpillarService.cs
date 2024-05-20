@@ -8,6 +8,7 @@ namespace GECA.Client.Console.Application.Abstractions.IServices
         Task<int> CollectAndStoreSpice(int row, int column);
         Task<GrowShrinkCaterpillarResponse> GrowShrinkCaterpillar(GrowShrinkCaterpillarRequest growShrinkCaterpillarRequest);
         Task<bool> DestroyCaterpillar(char[,] map, int row, int column);
+        Task<bool> UnDestroyCaterpillar(char[,] map, int row, int column);
         Task<bool> IsCaterpillarDestroyed();
         Task<int> GetCaterpillarRow();
         Task<int> GetCaterpillarColumn();

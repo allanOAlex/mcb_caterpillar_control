@@ -8,5 +8,8 @@ namespace GECA.Client.Console.Shared
         public static int CurrentCaterpillarColumn { get; set; }
         public static int RadarRange { get; set; } = 11;
         public static List<Spice> SpiceList { get; set; }
+        public static string? Direction { get; set; }
+        public static int Steps { get; set; }
+        public static bool GrowOrShrink { get; set; }
     }
 }
