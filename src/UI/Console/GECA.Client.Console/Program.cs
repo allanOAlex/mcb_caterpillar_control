@@ -100,7 +100,7 @@ while (true)
     AppConstants.Direction = direction;
     AppConstants.Steps = steps;
 
-    await simulation.MoveCaterpillar(new MoveCaterpillarRequest
+    await simulation.MoveCaterpillar_(new MoveCaterpillarRequest
     {
         Direction = direction,
         Steps = steps,
@@ -177,6 +177,10 @@ public class CaterpillarSimulation
         var serviceResponse = await serviceManager.MapService.PlaceCaterpillar(map);
         caterpillarRow = serviceResponse.Row;
         caterpillarColumn = serviceResponse.Column;
+
+        Caterpillar.CurrentRow = caterpillarRow;
+        Caterpillar.CurrentColumn = caterpillarColumn;
+
         return serviceResponse;
 
     }
@@ -276,8 +280,7 @@ public class CaterpillarSimulation
                 do
                 {
                     input = Console.ReadLine()?.ToUpper();
-                    validInput = input == "GROW" || input == "G" ||
-                                 input == "SHRINK" || input == "S";
+                    validInput = input == "GROW" || input == "G" || input == "SHRINK" || input == "S";
 
                     if (!validInput)
                     {
@@ -439,6 +442,125 @@ public class CaterpillarSimulation
             Console.WriteLine(); // Move to the next row
         }
     }
+
+    public async Task<MoveCaterpillarResponse> MoveCaterpillar_(MoveCaterpillarRequest moveCaterpillarRequest)
+    {
+        moveCaterpillarRequest.CurrentRow = caterpillarRow;
+        moveCaterpillarRequest.CurrentColumn = caterpillarColumn;
+
+        // Create and execute the move command
+        var moveCommand = new CaterpillarMoveCommand(Caterpillar, map, moveCaterpillarRequest, serviceManager.CaterpillarService, serviceManager.MapService);
+        var serviceResponse = await moveCommand.ExecuteAsync();
+
+        // Log the movement
+        Log.Information("Caterpillar Movement: " +
+            "{DateTime}: {Direction}: {Steps}: " +
+            "{PreviousRow}: {PreviousCol}: " +
+            "{CurrentRow}: {CurrentCol}:",
+            DateTime.Now, moveCaterpillarRequest.Direction, moveCaterpillarRequest.Steps,
+            caterpillarRow, caterpillarColumn,
+            serviceResponse.NewCatapillarRow, serviceResponse.NewCatapillarColumn
+        );
+
+        // Update caterpillar position
+        caterpillarRow = serviceResponse.NewCatapillarRow;
+        caterpillarColumn = serviceResponse.NewCatapillarColumn;
+        AppConstants.CurrentCaterpillarRow = serviceResponse.NewCatapillarRow;
+        AppConstants.CurrentCaterpillarColumn = serviceResponse.NewCatapillarColumn;
+
+        // Handle event-specific logic
+        switch (serviceResponse.EventType)
+        {
+            case EventType.Moved:
+                // No additional handling required
+                break;
+            case EventType.Obstacle:
+                caterpillarDestroyed = true;
+                AppConstants.CurrentCaterpillarRow = moveCaterpillarRequest.CurrentRow;
+                AppConstants.CurrentCaterpillarColumn = moveCaterpillarRequest.CurrentColumn;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("May Day! We hit an Obstacle!");
+                Console.ResetColor();
+                break;
+            case EventType.Booster:
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("We encountered Booster!");
+                Console.WriteLine("Do you wish to Grow or Shrink the Caterpillar? (For Grow, enter G or Grow || For Shrink, enter S Shrink)");
+                Console.ResetColor();
+
+                string input;
+                bool validInput;
+                do
+                {
+                    input = Console.ReadLine()?.ToUpper();
+                    validInput = input == "GROW" || input == "G" || input == "SHRINK" || input == "S";
+
+                    if (!validInput)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid input. Please enter 'G' or 'Grow' to grow, or 'S' or 'Shrink' to shrink.");
+                        Console.ResetColor();
+                    }
+                } while (!validInput);
+
+                var growShrinkResponse = await serviceManager.CaterpillarService.GrowShrinkCaterpillar(new GrowShrinkCaterpillarRequest
+                {
+                    Caterpillar = new CaterpillarDto() { Caterpillar = Caterpillar },
+                    Grow = input == "GROW" || input == "G"
+                });
+
+                if (growShrinkResponse.Successful)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    if (growShrinkResponse.CaterpillarGrown)
+                    {
+                        Console.WriteLine($"Caterpillar grown by {growShrinkResponse.CurrentSegments - growShrinkResponse.InitialSegments} segment(s)");
+                    }
+                    else if (growShrinkResponse.CaterpillarShrunk)
+                    {
+                        Console.WriteLine($"Caterpillar shrunk by {growShrinkResponse.InitialSegments - growShrinkResponse.CurrentSegments} segment(s)");
+                    }
+                    Console.WriteLine($"Initial Segment Count: {growShrinkResponse.InitialSegments}");
+                    Console.WriteLine($"Current Segment Count: {growShrinkResponse.CurrentSegments}");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.WriteLine("Operation failed. Caterpillar is already at maximum/minimum size.");
+                }
+                break;
+            case EventType.Spice:
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Spice! No Sauce");
+                var spiceCount = await serviceManager.CaterpillarService.CollectAndStoreSpice(serviceResponse.NewCatapillarRow, serviceResponse.NewCatapillarColumn);
+                if (spiceCount > 0)
+                {
+                    Console.WriteLine("Spice Saved!");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Something Went Wrong! I Could Not Save The Spice!!");
+                }
+                Console.ResetColor();
+                break;
+            case EventType.HorizontalCrossBoundary:
+            case EventType.VerticalCrossBoundary:
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine("-----------------------------------------------------------------------.");
+                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Crossing Boundaries!!");
+                Console.ResetColor();
+                break;
+            case EventType.HitMapBoundary:
+                Console.WriteLine("Cannot move. Reached map boundary.");
+                break;
+        }
+
+        return serviceResponse;
+    }
+
 
     public async Task MoveCaterpillarAsync(ICommand command)
     {
