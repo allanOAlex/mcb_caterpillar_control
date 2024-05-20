@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar
+namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {
     public abstract class BaseMovementCommand : ICommand
     {
@@ -20,8 +20,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected readonly CaterpillarSimulation simulation;
         protected readonly IServiceManager serviceManager;
 
-       
-        
+
+
         protected char[,] map;
         protected int previousRow;
         protected int previousColumn;
@@ -55,7 +55,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
 
             // Restore caterpillar segments
-            //simulation.Caterpillar.Segments = new List<Segment>(previousSegments);
+            simulation.Caterpillar.Segments = new List<Segment>(previousSegments);
 
             // Handle specific event type reversion
             switch (eventType)

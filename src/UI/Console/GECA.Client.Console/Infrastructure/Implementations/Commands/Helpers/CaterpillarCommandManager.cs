@@ -1,4 +1,5 @@
 ﻿using GECA.Client.Console.Application.Abstractions.ICommand;
+using GECA.Client.Console.Domain.Entities;
 using Serilog;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers
@@ -60,6 +61,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers
         private void LogCommand(ICaterpillarCommand command)
         {
             Log.Information("{DateTime}: {CommandType} executed", DateTime.Now, command.GetType().Name);
+            
         }
     }
 }

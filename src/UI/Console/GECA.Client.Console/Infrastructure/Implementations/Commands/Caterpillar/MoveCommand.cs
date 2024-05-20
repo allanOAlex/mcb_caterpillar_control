@@ -3,17 +3,15 @@ using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
+using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
 using GECA.Client.Console.Shared;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar
 {
     public class MoveCommand : GenericBaseMovementCommand
     {
-        private readonly IServiceManager serviceManager;
-
-        public MoveCommand(CaterpillarSimulation simulation, IServiceManager ServiceManager) : base(simulation)
+        public MoveCommand(CaterpillarSimulation simulation, IServiceManager ServiceManager) : base(simulation, ServiceManager)
         {
-            serviceManager = ServiceManager;
         }
 
         public override void Execute()
