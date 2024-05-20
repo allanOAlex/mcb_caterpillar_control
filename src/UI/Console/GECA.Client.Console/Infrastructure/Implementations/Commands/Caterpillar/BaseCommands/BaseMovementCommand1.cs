@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {
-    public abstract class GenericBaseMovementCommand : ICommandGeneric
+    public abstract class BaseMovementCommand1 : ICommand1
     {
         protected readonly char[,] map;
         protected readonly int previousRow;
@@ -21,7 +21,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected EventType eventType;
         protected readonly IServiceManager serviceManager;
 
-        public GenericBaseMovementCommand(CaterpillarSimulation simulation, IServiceManager ServiceManager)
+        public BaseMovementCommand1(CaterpillarSimulation simulation, IServiceManager ServiceManager)
         {
             this.simulation = simulation;
             serviceManager = ServiceManager;

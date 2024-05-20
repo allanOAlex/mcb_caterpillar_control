@@ -2,6 +2,7 @@
 using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,15 +13,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 {
     public abstract class BaseMovementCommand : ICommand
     {
-        //protected readonly char[,] map;
-        //protected readonly int caterpillarRow;
-        //protected readonly int caterpillarColumn;
-        //protected readonly CaterpillarSimulation simulation;
-
         protected readonly CaterpillarSimulation simulation;
         protected readonly IServiceManager serviceManager;
-
-
 
         protected char[,] map;
         protected int previousRow;
@@ -31,19 +25,14 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected List<Segment> previousSegments;
         protected List<Segment> newSegments;
 
-        public BaseMovementCommand(CaterpillarSimulation Simulation, IServiceManager ServiceManager)
+        public BaseMovementCommand(CaterpillarSimulation simulation, IServiceManager serviceManager)
         {
+            this.simulation = simulation;
+            this.serviceManager = serviceManager;
             map = simulation.map;
-            simulation = Simulation;
-            serviceManager = ServiceManager;
             previousRow = CaterpillarSimulation.caterpillarRow;
             previousColumn = CaterpillarSimulation.caterpillarColumn;
             previousSegments = new List<Segment>(simulation.Caterpillar.Segments);
-
-
-            //caterpillarRow = CaterpillarSimulation.caterpillarRow;
-            //caterpillarColumn = CaterpillarSimulation.caterpillarColumn;
-
         }
 
         public abstract Task ExecuteAsync(CaterpillarSimulation simulation);
@@ -63,6 +52,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                 case EventType.Obstacle:
                     await serviceManager.CaterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
                     break;
+
                 case EventType.Booster:
                     // Revert the caterpillar size change
                     if (previousSegments.Count > newSegments.Count)
@@ -74,10 +64,34 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                         simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
                     }
                     break;
+
                 case EventType.Spice:
                     map[previousRow, previousColumn] = 'S';
                     break;
             }
+
+            // Log the undo action
+            LogCommand(GetType().Name, eventType);
+        }
+
+        protected void SaveCurrentState()
+        {
+            previousRow = CaterpillarSimulation.caterpillarRow;
+            previousColumn = CaterpillarSimulation.caterpillarColumn;
+            previousSegments = new List<Segment>(simulation.Caterpillar.Segments);
+        }
+
+        protected void RestorePreviousState()
+        {
+            CaterpillarSimulation.caterpillarRow = previousRow;
+            CaterpillarSimulation.caterpillarColumn = previousColumn;
+            simulation.Caterpillar.Segments = new List<Segment>(previousSegments);
+        }
+
+        protected void LogCommand(string commandType, EventType eventType)
+        {
+            Log.Information("{DateTime}: {CommandType} executed with event {EventType} at ({PreviousRow}, {PreviousColumn}) to ({NewRow}, {NewColumn}), Segments: {SegmentCount}",
+                DateTime.Now, commandType, eventType, previousRow, previousColumn, newRow, newColumn, simulation.Caterpillar.Segments.Count);
         }
     }
 }

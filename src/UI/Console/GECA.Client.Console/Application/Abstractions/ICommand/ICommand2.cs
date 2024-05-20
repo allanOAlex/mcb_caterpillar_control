@@ -2,7 +2,7 @@
 
 namespace GECA.Client.Console.Application.Abstractions.ICommand
 {
-    public interface IBaseCaterpillarMovementCommand
+    public interface ICommand2
     {
         Task<MoveCaterpillarResponse> ExecuteAsync();
         Task Undo();
