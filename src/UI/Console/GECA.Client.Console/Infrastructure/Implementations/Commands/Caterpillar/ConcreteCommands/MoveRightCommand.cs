@@ -4,16 +4,15 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
+using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Shared;
 
-namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar
+namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
-    public class MoveUpCommand : BaseMovementCommand
+    public class MoveRightCommand : BaseMovementCommand
     {
-
-        public MoveUpCommand(CaterpillarSimulation Simulation, IServiceManager ServiceManager) : base(Simulation, ServiceManager)
+        public MoveRightCommand(CaterpillarSimulation Simulation, IServiceManager ServiceManager) : base(Simulation, ServiceManager)
         {
-          
         }
 
         public override async Task ExecuteAsync(CaterpillarSimulation simulation)
@@ -90,8 +89,5 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             // Restore caterpillar segments
             simulation.Caterpillar.Segments = new List<Segment>(previousSegments);
         }
-
-
     }
-
 }
