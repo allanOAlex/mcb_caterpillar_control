@@ -2,6 +2,7 @@
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
+using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,18 +22,12 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         {
             SaveCurrentState();
 
-            //var moveResponse = await caterpillarService.MoveCaterpillar(map, new MoveCaterpillarRequest
-            //{
-            //    Direction = direction,
-            //    Steps = steps
-            //});
-
             var moveResponse = await caterpillarService.MoveCaterpillar(map, moveCaterpillarRequest);
 
             switch (moveResponse.EventType)
             {
                 case EventType.Obstacle:
-                    await caterpillarService.DestroyCaterpillar(map, moveResponse.NewCatapillarRow, moveResponse.NewCatapillarColumn);
+                    await caterpillarService.DestroyCaterpillar(map, moveCaterpillarRequest.CurrentRow, moveCaterpillarRequest.CurrentColumn);
                     break;
                 case EventType.Booster:
                     break;
@@ -50,6 +45,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     });
                     break;
             }
+
+            LogCommandDetails();
 
             return moveResponse;
         }

@@ -138,6 +138,7 @@ public class CaterpillarSimulation
     public Caterpillar Caterpillar;
     private Stack<ICommand> commandHistory = new();
     private Stack<ICommandGeneric> commandHistoryGeneric = new();
+    private Stack<IBaseCaterpillarMovementCommand> moveCommandHistory = new();
 
     public CaterpillarSimulation(char[,] asyncMap, IServiceManager ServiceManager)
     {
@@ -403,46 +404,6 @@ public class CaterpillarSimulation
 
     }
 
-    public void DisplayRadar(char[,] map, int caterpillarRow, int caterpillarColumn, int radarRange)
-    {
-        Console.WriteLine("Radar Display:");
-
-        int mapSize = map.GetLength(0);
-        int halfRange = radarRange / 2;
-
-        // Determine the boundaries for scanning
-        int startRow = Math.Max(0, caterpillarRow - halfRange);
-        int endRow = Math.Min(mapSize - 1, caterpillarRow + halfRange);
-        int startCol = Math.Max(0, caterpillarColumn - halfRange);
-        int endCol = Math.Min(mapSize - 1, caterpillarColumn + halfRange);
-
-
-        // Scan the surrounding area and display the contents of each cell
-        for (int i = startRow; i <= endRow; i++)
-        {
-            for (int j = startCol; j <= endCol; j++)
-            {
-                if (i == caterpillarRow && j == caterpillarColumn)
-                {
-                    if (!caterpillarDestroyed == true)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Blue;
-                        Console.Write("C "); // Display the caterpillar
-                        Console.ResetColor();
-                    }
-                    
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write(map[i, j] + "."); // Display the content of the cell
-                    Console.ResetColor();
-                }
-            }
-            Console.WriteLine(); // Move to the next row
-        }
-    }
-
     public async Task<MoveCaterpillarResponse> MoveCaterpillar_(MoveCaterpillarRequest moveCaterpillarRequest)
     {
         moveCaterpillarRequest.CurrentRow = caterpillarRow;
@@ -450,18 +411,9 @@ public class CaterpillarSimulation
 
         // Create and execute the move command
         var moveCommand = new CaterpillarMoveCommand(Caterpillar, map, moveCaterpillarRequest, serviceManager.CaterpillarService, serviceManager.MapService);
-        var serviceResponse = await moveCommand.ExecuteAsync();
-
-        // Log the movement
-        Log.Information("Caterpillar Movement: " +
-            "{DateTime}: {Direction}: {Steps}: " +
-            "{PreviousRow}: {PreviousCol}: " +
-            "{CurrentRow}: {CurrentCol}:",
-            DateTime.Now, moveCaterpillarRequest.Direction, moveCaterpillarRequest.Steps,
-            caterpillarRow, caterpillarColumn,
-            serviceResponse.NewCatapillarRow, serviceResponse.NewCatapillarColumn
-        );
-
+        var serviceResponse = await ExecuteMoveCommand(moveCommand);
+        LogCommand(moveCommand);
+       
         // Update caterpillar position
         caterpillarRow = serviceResponse.NewCatapillarRow;
         caterpillarColumn = serviceResponse.NewCatapillarColumn;
@@ -561,23 +513,83 @@ public class CaterpillarSimulation
         return serviceResponse;
     }
 
-
-    public async Task MoveCaterpillarAsync(ICommand command)
+    public async Task MoveCaterpillarAsync(ICommand command, MoveCaterpillarRequest moveCaterpillarRequest)
     {
-        await command.ExecuteAsync(this);
-        commandHistory.Push(command);
+        moveCaterpillarRequest.CurrentRow = caterpillarRow;
+        moveCaterpillarRequest.CurrentColumn = caterpillarColumn;
+
+        switch (moveCaterpillarRequest.Direction.ToUpper())
+        {
+            case "U":
+            case "UP":
+                command = new MoveUpCommand(this, serviceManager);
+                break;
+            default:
+                break;
+        }
+
+        ExecuteCommand(command);
+       
     }
 
-    public void Move(Direction direction, IServiceManager serviceManager)
+    public void Move(IServiceManager serviceManager)
     {
         var command = new MoveCommand(this, serviceManager);
         ExecuteCommandGeneric(command);
     }
 
+    public void DisplayRadar(char[,] map, int caterpillarRow, int caterpillarColumn, int radarRange)
+    {
+        Console.WriteLine("Radar Display:");
+
+        int mapSize = map.GetLength(0);
+        int halfRange = radarRange / 2;
+
+        // Determine the boundaries for scanning
+        int startRow = Math.Max(0, caterpillarRow - halfRange);
+        int endRow = Math.Min(mapSize - 1, caterpillarRow + halfRange);
+        int startCol = Math.Max(0, caterpillarColumn - halfRange);
+        int endCol = Math.Min(mapSize - 1, caterpillarColumn + halfRange);
+
+
+        // Scan the surrounding area and display the contents of each cell
+        for (int i = startRow; i <= endRow; i++)
+        {
+            for (int j = startCol; j <= endCol; j++)
+            {
+                if (i == caterpillarRow && j == caterpillarColumn)
+                {
+                    if (!caterpillarDestroyed == true)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.Write("C "); // Display the caterpillar
+                        Console.ResetColor();
+                    }
+                    
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.Write(map[i, j] + "."); // Display the content of the cell
+                    Console.ResetColor();
+                }
+            }
+            Console.WriteLine(); // Move to the next row
+        }
+    }
+
+
     public void ExecuteCommand(ICommand command)
     {
         command.ExecuteAsync(this);
         commandHistory.Push(command);
+    }
+
+    public async Task<MoveCaterpillarResponse> ExecuteMoveCommand(IBaseCaterpillarMovementCommand command)
+    {
+        var serviceResponse =  await command.ExecuteAsync();
+        moveCommandHistory.Push(command);
+        return serviceResponse;
     }
 
     public void ExecuteCommandGeneric(ICommandGeneric command)
@@ -593,6 +605,11 @@ public class CaterpillarSimulation
             var lastCommand = commandHistory.Pop();
             lastCommand.UndoAsync(this);
         }
+    }
+
+    private void LogCommand(IBaseCaterpillarMovementCommand command)
+    {
+        command.LogCommandDetails(); 
     }
 
 
