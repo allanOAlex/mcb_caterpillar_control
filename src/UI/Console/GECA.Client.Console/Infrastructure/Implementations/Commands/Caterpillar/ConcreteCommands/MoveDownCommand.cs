@@ -6,7 +6,7 @@ using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
 using GECA.Client.Console.Shared;
 
-namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar
+namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
     public class MoveDownCommand : BaseMovementCommand
     {

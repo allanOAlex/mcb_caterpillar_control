@@ -6,27 +6,28 @@ using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
 using GECA.Client.Console.Shared;
 
-namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar
+namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
-    public class MoveCommand : GenericBaseMovementCommand
+    public class MoveUpCommand : BaseMovementCommand
     {
-        public MoveCommand(CaterpillarSimulation simulation, IServiceManager ServiceManager) : base(simulation, ServiceManager)
+
+        public MoveUpCommand(CaterpillarSimulation Simulation, IServiceManager ServiceManager) : base(Simulation, ServiceManager)
         {
+
         }
 
-        public override void Execute()
+        public override async Task ExecuteAsync(CaterpillarSimulation simulation)
         {
             try
             {
-                MoveCaterpillarRequest moveRequest = new()
+                // Handle movement logic (call service methods, update state)
+                var response = await serviceManager.CaterpillarService.MoveCaterpillar(map, new MoveCaterpillarRequest
                 {
                     CurrentRow = previousRow,
                     CurrentColumn = previousColumn,
                     Direction = AppConstants.Direction,
-                    Steps = AppConstants.Steps
-                };
-
-                var response = serviceManager.CaterpillarService.MoveCaterpillar(map, moveRequest).Result;
+                    Steps = AppConstants.Steps,
+                });
 
                 if (response.Successful)
                 {
@@ -37,11 +38,13 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     map[previousRow, previousColumn] = '.';
                     map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
 
+                    // Handle additional logic based on event type
                     HandleEventType(response);
                 }
             }
             catch (Exception)
             {
+
                 throw;
             }
         }
@@ -53,11 +56,13 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                 case EventType.Moved:
                     // Normal movement
                     break;
+
                 case EventType.Obstacle:
                     simulation.Caterpillar.Segments.Clear();
                     simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Head));
                     simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Tail));
                     break;
+
                 case EventType.Booster:
                     var growShrinkResponse = serviceManager.CaterpillarService.GrowShrinkCaterpillar(new GrowShrinkCaterpillarRequest
                     {
@@ -65,6 +70,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                         Grow = AppConstants.GrowOrShrink
                     }).Result;
                     break;
+
                 case EventType.Spice:
                     serviceManager.CaterpillarService.CollectAndStoreSpice(response.NewCatapillarRow, response.NewCatapillarColumn).Wait();
                     break;
@@ -72,6 +78,20 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     break;
             }
         }
+
+
+        public override async Task UndoAsync(CaterpillarSimulation simulation)
+        {
+            // Restore caterpillar position
+            CaterpillarSimulation.caterpillarRow = previousRow;
+            CaterpillarSimulation.caterpillarColumn = previousColumn;
+            map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
+
+            // Restore caterpillar segments
+            simulation.Caterpillar.Segments = new List<Segment>(previousSegments);
+        }
+
+
     }
 
 }
