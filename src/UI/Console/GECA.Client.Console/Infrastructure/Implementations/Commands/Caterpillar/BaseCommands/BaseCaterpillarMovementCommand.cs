@@ -19,10 +19,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected MoveCaterpillarRequest moveCaterpillarRequest;
         protected ICaterpillarService caterpillarService;
         protected IMapService mapService;
-
+        protected EventType eventType;
         protected int previousRow;
         protected int previousColumn;
         protected List<Segment> previousSegments;
+        protected List<Segment> newSegments;
 
         public BaseCaterpillarMovementCommand(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest MoveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
         {
@@ -38,6 +39,38 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         public async Task Undo()
         {
             RestorePreviousState();
+
+            // Restore caterpillar position
+            CaterpillarSimulation.caterpillarRow = previousRow;
+            CaterpillarSimulation.caterpillarColumn = previousColumn;
+            map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
+
+            // Restore caterpillar segments
+            caterpillar.Segments = new List<Segment>(previousSegments);
+
+            // Handle specific event type reversion
+            switch (eventType)
+            {
+                case EventType.Obstacle:
+                    await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
+                    break;
+                case EventType.Booster:
+                    // Revert the caterpillar size change
+                    if (previousSegments.Count > newSegments.Count)
+                    {
+                        caterpillar.Segments.RemoveAt(caterpillar.Segments.Count - 1);
+                    }
+                    else if (previousSegments.Count < newSegments.Count)
+                    {
+                        caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
+                    }
+                    map[previousRow, previousColumn] = 'B';
+                    break;
+                case EventType.Spice:
+                    map[previousRow, previousColumn] = 'S';
+                    break;
+            }
+
             Log.Information("Undo executed for {CommandType}. Caterpillar Position reverted to: ({Row}, {Column}), Segments: {SegmentCount}",
                 GetType().Name, caterpillar.CurrentRow, caterpillar.CurrentColumn, caterpillar.Segments.Count);
             await Task.CompletedTask;
