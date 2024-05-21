@@ -9,7 +9,7 @@ using Serilog;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
-    public class MoveDownCommand : BaseMovementCommand
+    public class MoveDownCommand : BaseMoveCommand
     {
         public MoveDownCommand(CaterpillarSimulation Simulation, IServiceManager ServiceManager) : base(Simulation, ServiceManager)
         {

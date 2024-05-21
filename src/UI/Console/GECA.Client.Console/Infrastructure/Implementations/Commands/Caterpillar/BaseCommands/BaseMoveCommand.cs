@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {
-    public abstract class BaseMovementCommand : ICommand
+    public abstract class BaseMoveCommand : ICommand
     {
         protected readonly CaterpillarSimulation simulation;
         protected readonly IServiceManager serviceManager;
@@ -25,7 +25,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected List<Segment> previousSegments;
         protected List<Segment> newSegments;
 
-        public BaseMovementCommand(CaterpillarSimulation simulation, IServiceManager serviceManager)
+        public BaseMoveCommand(CaterpillarSimulation simulation, IServiceManager serviceManager)
         {
             this.simulation = simulation;
             this.serviceManager = serviceManager;

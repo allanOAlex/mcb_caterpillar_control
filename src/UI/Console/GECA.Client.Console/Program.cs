@@ -103,23 +103,20 @@ while (true)
     AppConstants.Direction = direction;
     AppConstants.Steps = steps;
 
-    await simulation.MoveCaterpillar_(new MoveCaterpillarRequest
+    var moveCaterpillarResponse = await simulation.MoveCaterpillar_(new MoveCaterpillarRequest
     {
         Direction = direction,
         Steps = steps,
     });
 
-    Console.Clear();
-    simulation.PrintMap(asyncMap, size);
-    Console.WriteLine();
-    simulation.DisplayRadar(asyncMap, AppConstants.CurrentCaterpillarRow, AppConstants.CurrentCaterpillarColumn, AppConstants.RadarRange);
-    Console.WriteLine();
+    DisplayMaps(asyncMap, simulation, size);
 
     moveCount++;
 
-    if (moveCount == 3)
+    if (moveCount == 1)
     {
         simulation.TryUndoRedo();
+        DisplayMaps(asyncMap, simulation, size);
     }
 
     if (moveCount >= 100)
@@ -127,6 +124,16 @@ while (true)
         Console.WriteLine("Reached maximum number of moves (100). Simulation ending.");
         await Task.Delay(1000);
         return;
+    }
+
+    static void DisplayMaps(char[,] asyncMap, CaterpillarSimulation simulation, int size)
+    {
+        Console.Clear();
+        simulation.PrintMap(asyncMap, size);
+        Console.WriteLine();
+        simulation.DisplayRadar(asyncMap, simulation.Caterpillar.CurrentRow, simulation.Caterpillar.CurrentColumn, AppConstants.RadarRange);
+        Console.WriteLine();
+
     }
 
 }
@@ -183,7 +190,6 @@ public class CaterpillarSimulation
         while (true)
         {
             Console.WriteLine("Choose an action: ");
-            Console.WriteLine("1. Move Caterpillar");
             Console.WriteLine("1. Undo Last Move");
             Console.WriteLine("2. Redo Last Move");
             Console.WriteLine("3. Exit");
@@ -194,12 +200,12 @@ public class CaterpillarSimulation
             {
                 case "1":
                     commandHistory2.Undo();
-                    break;
+                    return;
                 case "2":
                     commandHistory2.Redo();
-                    break;
+                    return;
                 case "3":
-                    continue;
+                    return; ;
                 default:
                     Console.WriteLine("Invalid choice. Try again.");
                     break;
@@ -644,7 +650,6 @@ public class CaterpillarSimulation
         }
     }
 
-
     public void ExecuteCommand(ICommand command)
     {
         command.ExecuteAsync(this);
@@ -654,7 +659,8 @@ public class CaterpillarSimulation
     public async Task<MoveCaterpillarResponse> ExecuteMoveCommand(ICommand2 command)
     {
         var serviceResponse =  await command.ExecuteAsync();
-        moveCommandHistory.Push(command);
+        //moveCommandHistory.Push(command);
+        commandHistory2.Execute(command);
         return serviceResponse;
     }
 
@@ -665,8 +671,4 @@ public class CaterpillarSimulation
     }
 
 }
-
-
-
-
 

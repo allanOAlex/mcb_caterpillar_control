@@ -15,7 +15,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers
 
         public void Execute(ICommand2 command)
         {
-            command.ExecuteAsync().Wait();
+            //command.ExecuteAsync().Wait();
             LogCommand(command);
             _undoStack.Push(command);
             _redoStack.Clear();
