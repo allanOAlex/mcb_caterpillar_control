@@ -9,6 +9,7 @@
         HorizontalCrossBoundary,
         VerticalCrossBoundary,
         CrossBoundary,
-        HitMapBoundary
+        HitMapBoundary,
+        None
     }
 }

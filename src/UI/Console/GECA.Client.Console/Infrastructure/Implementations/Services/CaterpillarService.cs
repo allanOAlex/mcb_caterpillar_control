@@ -18,9 +18,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         private List<CollectedSpice> CollectedSpices; // Collection to store encountered spices
         private List<Spice> SpiceList; // Collection to store encountered spices
         
-
         private readonly IUnitOfWork unitOfWork;
-
 
         public CaterpillarService(IUnitOfWork UnitOfWork)
         {
@@ -132,19 +130,17 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 // Clear the current position of the caterpillar
                 map[moveCaterpillarRequest.CurrentRow, moveCaterpillarRequest.CurrentColumn] = '.';
 
-                // Update caterpillar's position
-                moveCaterpillarRequest.CurrentRow = newRow;
-                moveCaterpillarRequest.CurrentColumn = newColumn;
-
                 // Check if the caterpillar encountered any items
-                char item = map[moveCaterpillarRequest.CurrentRow, moveCaterpillarRequest.CurrentColumn];
+                char item = map[newRow, newColumn];
                 switch (item)
                 {
                     case 'B':
-                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a booster!", EventType = EventType.Booster, NewCatapillarRow = moveCaterpillarRequest.CurrentRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
+                        map[newRow, newColumn] = 'C';
+                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a booster!", EventType = EventType.Booster, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
 
                     case 'S':
-                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a spice!", EventType = EventType.Spice, NewCatapillarRow = moveCaterpillarRequest.CurrentRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
+                        map[newRow, newColumn] = 'C';
+                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a spice!", EventType = EventType.Spice, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
 
                 }
 
@@ -152,13 +148,13 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 {
                     // Boundary crossing detected
                     EventType eventType = (newRow == 0 || newRow == map.GetLength(0) - 1) ? EventType.VerticalCrossBoundary : EventType.HorizontalCrossBoundary;
-                    return new MoveCaterpillarResponse { Successful = true, Message = "Crossing Bounderies!", EventType = eventType, NewCatapillarRow = moveCaterpillarRequest.CurrentRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
+                    return new MoveCaterpillarResponse { Successful = true, Message = "Crossing Bounderies!", EventType = eventType, NewCatapillarRow = newRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
                 }
 
                 // Update caterpillar's new position on the map
-                map[moveCaterpillarRequest.CurrentRow, moveCaterpillarRequest.CurrentColumn] = 'C';
+                map[newRow, newColumn] = 'C';
 
-                return new MoveCaterpillarResponse { Successful = true, Message = "Move Successful!", EventType = EventType.Moved, NewCatapillarRow = moveCaterpillarRequest.CurrentRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
+                return new MoveCaterpillarResponse { Successful = true, Message = "Move Successful!", EventType = EventType.Moved, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
             }
             catch (Exception)
             {
@@ -224,9 +220,6 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                         Row = spice.Row,
                         Column = spice.Column,
                     };
-
-                    SpiceList.Add(spiceToSave);
-                    
 
                     var savedSpice = await unitOfWork.SpiceRepository.Create(spiceToSave);
                     if (savedSpice != null)
