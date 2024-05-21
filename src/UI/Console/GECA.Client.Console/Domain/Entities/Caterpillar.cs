@@ -5,6 +5,8 @@ namespace GECA.Client.Console.Domain.Entities
     public class Caterpillar
     {
         public int Id { get; set; }
+        public int PreviousRow { get; set; }
+        public int PreviousColumn { get; set; }
         public int CurrentRow { get; set; }
         public int CurrentColumn { get; set; }
         public int MaxSegments { get; set; } // Maximum number of segments the caterpillar can have

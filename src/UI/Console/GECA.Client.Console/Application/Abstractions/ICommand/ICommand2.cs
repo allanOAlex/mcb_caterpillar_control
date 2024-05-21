@@ -7,6 +7,6 @@ namespace GECA.Client.Console.Application.Abstractions.ICommand
         Task<MoveCaterpillarResponse> ExecuteAsync();
         Task Undo();
         Task Redo();
-        void LogCommandDetails();
+        void LogCommandDetails(int currentCaterpillarRow, int currentCaterpillarCol);
     }
 }

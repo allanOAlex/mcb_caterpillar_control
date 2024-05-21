@@ -26,7 +26,7 @@ namespace GECA.Client.Console.Application.Dtos
         public int BoundaryRow { get; init; }
         public bool BoundaryColumn { get; init; }
 
-        public EventType EventType { get; init; }
+        public EventType EventType { get; set; }
         public int NewCatapillarRow { get; init; }
         public int NewCatapillarColumn { get; init; }
     }

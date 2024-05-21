@@ -6,5 +6,7 @@
         public int Steps { get; init; }
         public int CurrentRow { get; set; }
         public int CurrentColumn { get; set; }
+        public int NewRow { get; set; }
+        public int NewColumn { get; set; }
     }
 }

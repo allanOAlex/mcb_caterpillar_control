@@ -26,6 +26,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
             var moveResponse = await caterpillarService.MoveCaterpillar(map, moveCaterpillarRequest);
 
+            caterpillar.PreviousRow = moveCaterpillarRequest.CurrentRow;
+            caterpillar.PreviousColumn = moveCaterpillarRequest.CurrentColumn;
+            caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
+            caterpillar.CurrentColumn = moveResponse.NewCatapillarColumn;
+
             switch (moveResponse.EventType)
             {
                 case EventType.Obstacle:
@@ -36,15 +41,13 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     break;
 
                 case EventType.Booster:
-                    var growShrinkResponse = await caterpillarService.GrowShrinkCaterpillar(new GrowShrinkCaterpillarRequest
-                    {
-                        Caterpillar = new CaterpillarDto { Caterpillar = caterpillar },
-                        Grow = AppConstants.GrowOrShrink
-                    });
+                  
+                    //Best handled in CaterpillarSimulation class
                     break;
 
                 case EventType.Spice:
                     await caterpillarService.CollectAndStoreSpice(moveResponse.NewCatapillarRow, moveResponse.NewCatapillarColumn);
+                    
                     break;
 
                 case EventType.HorizontalCrossBoundary:
@@ -67,7 +70,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     break;
             }
 
-            LogCommandDetails();
+            LogCommandDetails(moveResponse.NewCatapillarRow, moveResponse.NewCatapillarColumn);
 
             return moveResponse;
         }
