@@ -116,17 +116,17 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             caterpillar.Segments = new List<Segment>(previousSegments);
         }
 
-        public void LogCommandDetails()
+        public void LogCommandDetails(int currentCaterpillarRow, int currentCaterpillarCol)
         {
             Log.Information("" +
                 "{DateTime}: {CommandType} executed. " +
-                "Caterpillar Position: ({CurrentRow}, {CurrentColumn}), " +
+                "Previous Caterpillar Position: ({CurrentRow}, {CurrentColumn}), " +
+                "Current Caterpillar Position: ({CurrentRow}, {CurrentColumn}), " +
                 "Segments: {SegmentCount}",
                 DateTime.Now, GetType().Name,
+                caterpillar.PreviousRow, caterpillar.PreviousColumn,
                 caterpillar.CurrentRow, caterpillar.CurrentColumn,
                 caterpillar.Segments.Count);
         }
-
-
     }
 }
