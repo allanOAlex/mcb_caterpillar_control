@@ -26,6 +26,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
             var moveResponse = await caterpillarService.MoveCaterpillar(map, moveCaterpillarRequest);
 
+            if (moveResponse == null)
+            {
+                throw new InvalidOperationException("MoveCaterpillarResponse cannot be null");
+            }
+
             caterpillar.PreviousRow = moveCaterpillarRequest.CurrentRow;
             caterpillar.PreviousColumn = moveCaterpillarRequest.CurrentColumn;
             caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
