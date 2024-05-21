@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
-    public class CaterpillarMoveCommand : BaseMovementCommand2
+    public class CaterpillarMoveCommand : BaseCaterpillarMoveCommand
     {
         public CaterpillarMoveCommand(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest moveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
         : base(caterpillar, map, moveCaterpillarRequest, caterpillarService, mapService)
@@ -88,9 +88,9 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
             await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(replicateMapRequest);
 
-            // Update the caterpillar's position based on the new map after crossing the boundary
-            caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
-            caterpillar.CurrentColumn = moveResponse.NewCatapillarColumn;
+            //// Update the caterpillar's position based on the new map after crossing the boundary
+            //caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
+            //caterpillar.CurrentColumn = moveResponse.NewCatapillarColumn;
 
             Log.Information("{DateTime}: Caterpillar crossed boundary. New Position: ({Row}, {Column})",
                 DateTime.Now, caterpillar.CurrentRow, caterpillar.CurrentColumn);

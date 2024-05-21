@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {
-    public abstract class BaseMovementCommand2 : ICommand2
+    public abstract class BaseCaterpillarMoveCommand : ICommand2
     {
         protected Domain.Entities.Caterpillar caterpillar;
         protected char[,] map;
@@ -25,7 +25,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected List<Segment> previousSegments;
         protected List<Segment> newSegments;
 
-        public BaseMovementCommand2(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest MoveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
+        public BaseCaterpillarMoveCommand(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest MoveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
         {
             this.caterpillar = caterpillar;
             this.map = map;
@@ -38,19 +38,29 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
         public async Task Undo()
         {
+
+            var currentCaterpillarRow = caterpillar.CurrentRow;
+            var currentCaterpillarCol = caterpillar.CurrentColumn;
+            map[currentCaterpillarRow, currentCaterpillarCol] = '.';
+
             RestorePreviousState();
-
-            // Restore caterpillar position
-            CaterpillarSimulation.caterpillarRow = previousRow;
-            CaterpillarSimulation.caterpillarColumn = previousColumn;
-            map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
-
-            // Restore caterpillar segments
-            caterpillar.Segments = new List<Segment>(previousSegments);
 
             // Handle specific event type reversion
             switch (eventType)
             {
+                case EventType.Moved:
+                    // Restore caterpillar position
+                    CaterpillarSimulation.caterpillarRow = previousRow;
+                    CaterpillarSimulation.caterpillarColumn = previousColumn;
+                    map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
+
+                    // Update current position with empty sapce
+
+                    // Restore caterpillar segments
+                    caterpillar.Segments = new List<Segment>(previousSegments);
+
+                    break;
+
                 case EventType.Obstacle:
                     await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
 

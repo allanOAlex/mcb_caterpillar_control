@@ -9,7 +9,7 @@ using GECA.Client.Console.Shared;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
-    public class MoveLeftCommand : BaseMovementCommand
+    public class MoveLeftCommand : BaseMoveCommand
     {
         public MoveLeftCommand(CaterpillarSimulation Simulation, IServiceManager ServiceManager) : base(Simulation, ServiceManager)
         {
