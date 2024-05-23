@@ -107,7 +107,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                         GrowShrinkCaterpillarRequest growShrinkRequest = new()
                         {
                             Caterpillar = new CaterpillarDto { Caterpillar = caterpillar },
-                            Grow = true
+                            Grow = false
                         };
 
                         caterpillar.Segments.RemoveAt(caterpillar.Segments.Count - 1);
@@ -119,7 +119,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                         GrowShrinkCaterpillarRequest growShrinkRequest = new()
                         {
                             Caterpillar = new CaterpillarDto { Caterpillar = caterpillar },
-                            Grow = false
+                            Grow = true
                         };
 
                         caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
