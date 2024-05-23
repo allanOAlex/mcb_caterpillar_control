@@ -113,7 +113,7 @@ while (true)
 
     moveCount++;
 
-    if (moveCount == 1)
+    if (moveCount == 1 || moveCount == 2 || moveCount == 3)
     {
         simulation.TryUndoRedo();
         DisplayMaps(asyncMap, simulation, size);
@@ -563,6 +563,14 @@ public class CaterpillarSimulation
 
         if (growShrinkResponse.Successful)
         {
+
+            AppConstants.CurrentSegmentCount = growShrinkResponse.CurrentSegments;
+            AppConstants.PreviousSegmentCount = growShrinkResponse.InitialSegments;
+            Caterpillar.CurrentSegmentCount = growShrinkResponse.CurrentSegments;
+            Caterpillar.PreviousSegmentCount = growShrinkResponse.InitialSegments;
+            Caterpillar.Segments = growShrinkResponse.CurrentCaterpillarSegments;
+            Caterpillar.PreviousSegments = growShrinkResponse.PreviousCaterpillarSegments;
+
             Console.ForegroundColor = ConsoleColor.Green;
             if (growShrinkResponse.CaterpillarGrown)
             {

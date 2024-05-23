@@ -9,9 +9,12 @@ namespace GECA.Client.Console.Domain.Entities
         public int PreviousColumn { get; set; }
         public int CurrentRow { get; set; }
         public int CurrentColumn { get; set; }
-        public int MaxSegments { get; set; } // Maximum number of segments the caterpillar can have
+        public int MaxSegments { get; set; } 
+        public int CurrentSegmentCount { get; set; } 
+        public int PreviousSegmentCount { get; set; }
 
-        public List<Segment> Segments { get; set; } = new List<Segment>();
+        public List<Segment> PreviousSegments { get; set; }
+        public List<Segment> Segments { get; set; } = new();
 
         public Caterpillar()
         {

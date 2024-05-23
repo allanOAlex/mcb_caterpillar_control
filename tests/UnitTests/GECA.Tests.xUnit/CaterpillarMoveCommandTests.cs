@@ -26,7 +26,6 @@ namespace GECA.Tests.xUnit
                 Segments = new List<Segment>
                 {
                     new Segment(SegmentType.Head),
-                    new Segment(SegmentType.Intermediate),
                     new Segment(SegmentType.Tail)
                 },
                 CurrentRow = 5,
@@ -78,6 +77,7 @@ namespace GECA.Tests.xUnit
             };
             _mockCaterpillarService.Setup(service => service.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                                    .ReturnsAsync(moveResponse);
+
             await _command.ExecuteAsync(); // Move to save state
             _caterpillar.CurrentRow = 7; // Change state
             _caterpillar.CurrentColumn = 7;
@@ -89,7 +89,7 @@ namespace GECA.Tests.xUnit
             // Assert
             Assert.Equal(5, _caterpillar.CurrentRow);
             Assert.Equal(5, _caterpillar.CurrentColumn);
-            Assert.Equal(3, _caterpillar.Segments.Count);
+            Assert.Equal(2, _caterpillar.Segments.Count);
         }
 
         [Fact]

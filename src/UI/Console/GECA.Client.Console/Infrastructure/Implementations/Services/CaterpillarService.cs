@@ -167,6 +167,9 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             try
             {
+                var previousCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.ToList(); // Create a copy
+                AppConstants.PreviousCaterpillarSegments = previousCaterpillarSegments;
+
                 var initialSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count;
 
                 if (growShrinkCaterpillarRequest.Grow)
@@ -176,7 +179,15 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                     {
                         // Add a new segment to the caterpillar
                         growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Insert(1, new Segment(SegmentType.Intermediate)); // Insert after the head
-                        return new GrowShrinkCaterpillarResponse { Successful = true, CaterpillarGrown = true, InitialSegments = initialSegments, CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count };
+                        return new GrowShrinkCaterpillarResponse
+                        {
+                            Successful = true,
+                            CaterpillarGrown = true,
+                            InitialSegments = initialSegments,
+                            CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count,
+                            PreviousCaterpillarSegments = AppConstants.PreviousCaterpillarSegments,
+                            CurrentCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments
+                        };
                     }
                     else
                     {
@@ -191,7 +202,15 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                     {
                         // Remove the last segment from the caterpillar
                         growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.RemoveAt(growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count - 1);
-                        return new GrowShrinkCaterpillarResponse { Successful = true, CaterpillarShrunk = true, InitialSegments = initialSegments, CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Segments.Count };
+                        return new GrowShrinkCaterpillarResponse 
+                        { 
+                            Successful = true, 
+                            CaterpillarShrunk = true, 
+                            InitialSegments = initialSegments, 
+                            CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Segments.Count,
+                            PreviousCaterpillarSegments = AppConstants.PreviousCaterpillarSegments,
+                            CurrentCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments
+                        };
                     }
                     else
                     {

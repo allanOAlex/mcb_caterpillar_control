@@ -35,6 +35,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             caterpillar.PreviousColumn = moveCaterpillarRequest.CurrentColumn;
             caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
             caterpillar.CurrentColumn = moveResponse.NewCatapillarColumn;
+            eventType = moveResponse.EventType;
 
             switch (moveResponse.EventType)
             {
@@ -103,10 +104,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
         private void HandleMapBoundaryHit()
         {
-            // Caterpillar hits the map boundary, so we reset it to the previous position
-            RestorePreviousState();
             map[previousRow, previousColumn] = 'C';
-
+            RestorePreviousState();
             Log.Information("{DateTime}: Caterpillar hit map boundary. Reset to Previous Position: ({Row}, {Column})",
                 DateTime.Now, caterpillar.CurrentRow, caterpillar.CurrentColumn);
         }
