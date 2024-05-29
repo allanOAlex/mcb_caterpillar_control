@@ -58,13 +58,6 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
                 case EventType.HorizontalCrossBoundary:
                 case EventType.VerticalCrossBoundary:
-                    await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(new ReplicateMapRequest
-                    {
-                        Map = map,
-                        CaterpillarRow = moveResponse.NewCatapillarRow,
-                        CaterpillarColumn = moveResponse.NewCatapillarColumn,
-                        IsHorizontalMirroring = moveResponse.EventType == EventType.HorizontalCrossBoundary ? true : false
-                    });
 
                     await HandleBoundaryCross(moveResponse);
 
@@ -89,7 +82,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                 Map = map,
                 CaterpillarRow = moveResponse.NewCatapillarRow,
                 CaterpillarColumn = moveResponse.NewCatapillarColumn,
-                IsHorizontalMirroring = moveResponse.EventType == EventType.HorizontalCrossBoundary ? false : true  
+                IsHorizontalMirroring = moveResponse.EventType == EventType.HorizontalCrossBoundary ? true : false  
             };
 
             await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(replicateMapRequest);

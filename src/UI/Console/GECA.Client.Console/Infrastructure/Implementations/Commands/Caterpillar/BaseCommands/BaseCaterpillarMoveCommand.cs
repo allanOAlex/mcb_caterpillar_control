@@ -46,7 +46,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
             if (previousSegments == null )
             {
-                previousSegments = caterpillar.PreviousSegments;
+                previousSegments = caterpillar.PreviousSegments ?? caterpillar.Segments;
             }
 
             switch (eventType)
@@ -64,8 +64,10 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     map[currentCaterpillarRow, currentCaterpillarCol] = 'S';
                     break;
                 case EventType.HorizontalCrossBoundary:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = '.';
                     break;
                 case EventType.VerticalCrossBoundary:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = '.';
                     break;
                 case EventType.CrossBoundary:
                     break;
@@ -137,20 +139,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
                 case EventType.HorizontalCrossBoundary:
                 case EventType.VerticalCrossBoundary:
-                    
-                    // Handle reverting boundary crossing by replicating the map back to its original state
-                    var replicateMapResponse = await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(new ReplicateMapRequest
-                    {
-                        Map = map,
-                        CaterpillarRow = previousRow,
-                        CaterpillarColumn = previousColumn,
-                        IsHorizontalMirroring = eventType == EventType.HorizontalCrossBoundary ? true : false,
-                    });
 
-                    // Update map and caterpillar position based on response
-                    map = replicateMapResponse.Map;
-                    caterpillar.CurrentRow = replicateMapResponse.NewCaterpillarRow;
-                    caterpillar.CurrentColumn = replicateMapResponse.NewCaterpillarColumn;
+                    RestorePreviousState();
 
                     break;
 

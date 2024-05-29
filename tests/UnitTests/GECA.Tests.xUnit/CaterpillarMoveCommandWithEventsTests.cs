@@ -110,67 +110,6 @@ namespace GECA.Tests.xUnit
             _caterpillarServiceMock.Verify(s => s.GrowShrinkCaterpillar(It.IsAny<GrowShrinkCaterpillarRequest>()), Times.Once);
         }
 
-        [Theory]
-        [InlineData(EventType.HorizontalCrossBoundary, true)]
-        [InlineData(EventType.VerticalCrossBoundary, false)]
-        public async Task Undo_ShouldRevertBoundaryCross(EventType eventType, bool isHorizontal)
-        {
-            // Arrange
-            _command.SaveCurrentState();
-
-            // Initial move to set the state
-            var initialResponse = new MoveCaterpillarResponse
-            {
-                Successful = true,
-                EventType = EventType.Moved,
-                NewCatapillarRow = 1,
-                NewCatapillarColumn = 1
-            };
-
-            // Setup the sequence of moves
-            _caterpillarServiceMock
-                .SetupSequence(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
-                .ReturnsAsync(initialResponse)
-                .ReturnsAsync(new MoveCaterpillarResponse
-                {
-                    Successful = true,
-                    EventType = eventType,
-                    NewCatapillarRow = eventType == EventType.HorizontalCrossBoundary ? 0 : 1,
-                    NewCatapillarColumn = eventType == EventType.VerticalCrossBoundary ? 0 : 1
-                });
-
-            // Execute the initial move
-            await _command.ExecuteAsync();
-
-            _caterpillar.CurrentRow = eventType == EventType.HorizontalCrossBoundary ? 0 : 1;
-            _caterpillar.CurrentColumn = eventType == EventType.VerticalCrossBoundary ? 0 : 1;
-            _map[_caterpillar.CurrentRow, _caterpillar.CurrentColumn] = 'C';
-
-            // Mock the map service method to return a valid ReplicateMapResponse
-            var replicateMapResponse = new ReplicateMapResponse
-            {
-                Map = _map,
-                NewCaterpillarRow = 1,
-                NewCaterpillarColumn = 1
-            };
-
-            _mapServiceMock
-                .Setup(s => s.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(It.Is<ReplicateMapRequest>(req => req.IsHorizontalMirroring == isHorizontal)))
-                .ReturnsAsync(replicateMapResponse);
-
-            // Act
-            await _command.Undo();
-
-            // Assert
-            Assert.Equal(1, _caterpillar.CurrentRow);
-            Assert.Equal(1, _caterpillar.CurrentColumn);
-            Assert.Equal('C', _map[1, 1]);
-
-            _mapServiceMock.Verify(s => s.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(It.Is<ReplicateMapRequest>(req =>
-                req.IsHorizontalMirroring == isHorizontal
-            )), Times.Once);
-        }
-
         [Fact]
         public async Task Undo_ShouldRevertHitMapBoundary()
         {
@@ -211,7 +150,6 @@ namespace GECA.Tests.xUnit
                 .Setup(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                 .ReturnsAsync(boundaryResponse);
 
-
             // Act
             await _command.Undo();
 
@@ -219,6 +157,66 @@ namespace GECA.Tests.xUnit
             Assert.Equal(15, _caterpillar.CurrentRow);
             Assert.Equal(15, _caterpillar.CurrentColumn);
             Assert.Equal('C', _map[15, 15]);
+        }
+
+        [Fact]
+        public async Task Undo_ShouldRevertHorizontalBoundaryCross()
+        {
+            // Arrange
+            _command.SaveCurrentState();
+
+            _moveCaterpillarRequest = new MoveCaterpillarRequest
+            {
+                CurrentRow = 15,
+                CurrentColumn = 15,
+                Direction = "RIGHT",
+                Steps = 15
+            };
+
+            // Initial move to set the state
+            var initialResponse = new MoveCaterpillarResponse
+            {
+                Successful = true,
+                EventType = EventType.HorizontalCrossBoundary,
+                NewCatapillarRow = 15,
+                NewCatapillarColumn = 0
+            };
+
+            // Setup the sequence of moves
+            _caterpillarServiceMock
+                .SetupSequence(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
+                .ReturnsAsync(initialResponse);
+                
+            // Execute the initial move
+            await _command.ExecuteAsync();
+
+            _caterpillar.CurrentRow = 15;
+            _caterpillar.CurrentColumn = 0;
+            _map[_caterpillar.CurrentRow, _caterpillar.CurrentColumn] = 'C';
+
+            // Mock the map service method to return a valid ReplicateMapResponse
+            var replicateMapResponse = new ReplicateMapResponse
+            {
+                Map = _map,
+                NewCaterpillarRow = 15,
+                NewCaterpillarColumn = 0
+            };
+
+            _mapServiceMock
+                .Setup(s => s.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(It.Is<ReplicateMapRequest>(req => req.IsHorizontalMirroring)))
+                .ReturnsAsync(replicateMapResponse);
+
+            // Act
+            await _command.Undo();
+
+            // Assert
+            Assert.Equal(_caterpillar.PreviousRow, _caterpillar.CurrentRow);
+            Assert.Equal(_caterpillar.PreviousColumn, _caterpillar.CurrentColumn);
+            Assert.Equal('C', _map[_caterpillar.PreviousRow, _caterpillar.PreviousColumn]);
+
+            _mapServiceMock.Verify(s => s.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(It.Is<ReplicateMapRequest>(req =>
+                req.IsHorizontalMirroring
+            )), Times.Once);
         }
 
         [Fact]
@@ -334,6 +332,67 @@ namespace GECA.Tests.xUnit
             Assert.Equal('C', _map[15, 15]);
             Assert.Equal('S', _map[14, 15]);
         }
+
+        [Fact]
+        public async Task Undo_ShouldRevertVerticalBoundaryCross()
+        {
+            // Arrange
+            _command.SaveCurrentState();
+
+            _moveCaterpillarRequest = new MoveCaterpillarRequest
+            {
+                CurrentRow = 15,
+                CurrentColumn = 15,
+                Direction = "UP",
+                Steps = 15
+            };
+
+            // Initial move to set the state
+            var initialResponse = new MoveCaterpillarResponse
+            {
+                Successful = true,
+                EventType = EventType.VerticalCrossBoundary,
+                NewCatapillarRow = 0,
+                NewCatapillarColumn = 15
+            };
+
+            // Setup the sequence of moves
+            _caterpillarServiceMock
+                .SetupSequence(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
+                .ReturnsAsync(initialResponse);
+                
+            // Execute the initial move
+            await _command.ExecuteAsync();
+
+            _caterpillar.CurrentRow = 0;
+            _caterpillar.CurrentColumn = 15;
+            _map[_caterpillar.CurrentRow, _caterpillar.CurrentColumn] = 'C';
+
+            // Mock the map service method to return a valid ReplicateMapResponse
+            var replicateMapResponse = new ReplicateMapResponse
+            {
+                Map = _map,
+                NewCaterpillarRow = 0,
+                NewCaterpillarColumn = 15
+            };
+
+            _mapServiceMock
+                .Setup(s => s.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(It.Is<ReplicateMapRequest>(req => !req.IsHorizontalMirroring)))
+                .ReturnsAsync(replicateMapResponse);
+
+            // Act
+            await _command.Undo();
+
+            // Assert
+            Assert.Equal(_caterpillar.PreviousRow, _caterpillar.CurrentRow);
+            Assert.Equal(_caterpillar.PreviousColumn, _caterpillar.CurrentColumn);
+            Assert.Equal('C', _map[_caterpillar.PreviousRow, _caterpillar.PreviousColumn]);
+
+            _mapServiceMock.Verify(s => s.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(It.Is<ReplicateMapRequest>(req =>
+                !req.IsHorizontalMirroring
+            )), Times.Once);
+        }
+
 
 
     }

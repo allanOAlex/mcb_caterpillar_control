@@ -88,7 +88,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             try
             {
-                
+
                 int newRow = moveCaterpillarRequest.CurrentRow;
                 int newColumn = moveCaterpillarRequest.CurrentColumn;
 
@@ -115,11 +115,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                         return new MoveCaterpillarResponse { Successful = false, Message = "Invalid Direction." };
                 }
 
-                // Check if the new position is within the map boundaries
-                if (newRow < 0 || newRow >= map.GetLength(0) || newColumn < 0 || newColumn >= map.GetLength(1))
-                {
-                    return new MoveCaterpillarResponse { Successful = false, Message = "Cannot move. Reached map boundary.", EventType = EventType.HitMapBoundary };
-                }
+                //// Check if the new position is within the map boundaries
+                //if (newRow < 0 || newRow >= map.GetLength(0) || newColumn < 0 || newColumn >= map.GetLength(1))
+                //{
+                //    return new MoveCaterpillarResponse { Successful = false, Message = "Cannot move. Reached map boundary.", EventType = EventType.HitMapBoundary };
+                //}
 
                 // Check if the new position has an obstacle
                 if (map[newRow, newColumn] == '#')
@@ -131,25 +131,21 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 map[moveCaterpillarRequest.CurrentRow, moveCaterpillarRequest.CurrentColumn] = '.';
 
                 // Check if the caterpillar encountered any items
-                char item = map[newRow, newColumn];
-                switch (item)
-                {
-                    case 'B':
-                        map[newRow, newColumn] = 'C';
-                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a booster!", EventType = EventType.Booster, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
+                CheckIfCaterpillarEncounteredItems(map, newRow, newColumn);
 
-                    case 'S':
-                        map[newRow, newColumn] = 'C';
-                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a spice!", EventType = EventType.Spice, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
-
-                }
-
-                if (newRow == 0 || newRow == map.GetLength(0) - 1 || newColumn == 0 || newColumn == map.GetLength(1) - 1)
+                if (newRow == -1 || newRow == map.GetLength(0) || newColumn == -1 || newColumn == map.GetLength(1))
                 {
                     // Boundary crossing detected
                     EventType eventType = (newRow == 0 || newRow == map.GetLength(0) - 1) ? EventType.VerticalCrossBoundary : EventType.HorizontalCrossBoundary;
                     return new MoveCaterpillarResponse { Successful = true, Message = "Crossing Bounderies!", EventType = eventType, NewCatapillarRow = newRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
                 }
+
+                //if (newRow == 0 || newRow == map.GetLength(0) - 1 || newColumn == 0 || newColumn == map.GetLength(1) - 1)
+                //{
+                //    // Boundary crossing detected
+                //    EventType eventType = (newRow == 0 || newRow == map.GetLength(0) - 1) ? EventType.VerticalCrossBoundary : EventType.HorizontalCrossBoundary;
+                //    return new MoveCaterpillarResponse { Successful = true, Message = "Crossing Bounderies!", EventType = eventType, NewCatapillarRow = newRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
+                //}
 
                 // Update caterpillar's new position on the map
                 map[newRow, newColumn] = 'C';
@@ -161,6 +157,24 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
 
                 throw;
             }
+        }
+
+        private static MoveCaterpillarResponse CheckIfCaterpillarEncounteredItems(char[,] map, int newRow, int newColumn)
+        {
+            char item = map[newRow, newColumn];
+            switch (item)
+            {
+                case 'B':
+                    map[newRow, newColumn] = 'C';
+                    return new MoveCaterpillarResponse { Successful = true, Message = "Found a booster!", EventType = EventType.Booster, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
+
+                case 'S':
+                    map[newRow, newColumn] = 'C';
+                    return new MoveCaterpillarResponse { Successful = true, Message = "Found a spice!", EventType = EventType.Spice, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
+
+            }
+
+            throw new NotImplementedException();
         }
 
         public async Task<GrowShrinkCaterpillarResponse> GrowShrinkCaterpillar(GrowShrinkCaterpillarRequest growShrinkCaterpillarRequest)
