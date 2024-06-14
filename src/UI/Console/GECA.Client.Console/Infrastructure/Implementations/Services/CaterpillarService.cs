@@ -54,7 +54,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             try
             {
-                caterpillarDestroyed = true;
+                caterpillarDestroyed = false;
 
                 // Remove the caterpillar from the map
                 map[row, column] = 'C';
@@ -197,8 +197,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                         {
                             Successful = true,
                             CaterpillarGrown = true,
-                            InitialSegments = initialSegments,
-                            CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count,
+                            InitialSegmentCount = initialSegments,
+                            CurrentSegmentCount = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count,
                             PreviousCaterpillarSegments = AppConstants.PreviousCaterpillarSegments,
                             CurrentCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments
                         };
@@ -220,8 +220,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                         { 
                             Successful = true, 
                             CaterpillarShrunk = true, 
-                            InitialSegments = initialSegments, 
-                            CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Segments.Count,
+                            InitialSegmentCount = initialSegments, 
+                            CurrentSegmentCount = growShrinkCaterpillarRequest.Caterpillar.Segments.Count,
                             PreviousCaterpillarSegments = AppConstants.PreviousCaterpillarSegments,
                             CurrentCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments
                         };

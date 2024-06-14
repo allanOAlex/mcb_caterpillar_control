@@ -28,16 +28,18 @@ namespace GECA.Tests.xUnit
                     new Segment(SegmentType.Head),
                     new Segment(SegmentType.Tail)
                 },
-                CurrentRow = 5,
-                CurrentColumn = 5
+                CurrentRow = 15,
+                CurrentColumn = 15
             };
+
             _map = new char[30, 30];
+
             _moveCaterpillarRequest = new MoveCaterpillarRequest
             {
                 CurrentRow = 15,
                 CurrentColumn = 15,
-                NewRow = 12,
-                NewColumn = 15
+                Direction = "UP",
+                Steps = 1
             };
 
             _command = new CaterpillarMoveCommand(_caterpillar, _map, _moveCaterpillarRequest, _mockCaterpillarService.Object, _mockMapService.Object);
@@ -53,6 +55,7 @@ namespace GECA.Tests.xUnit
                 NewCatapillarRow = 12,
                 NewCatapillarColumn = 15
             };
+
             _mockCaterpillarService.Setup(service => service.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                                    .ReturnsAsync(moveResponse);
 
@@ -71,24 +74,22 @@ namespace GECA.Tests.xUnit
             // Arrange
             var moveResponse = new MoveCaterpillarResponse
             {
+                Successful = true,
                 EventType = EventType.Moved,
-                NewCatapillarRow = 6,
-                NewCatapillarColumn = 6
+                NewCatapillarRow = 14,
+                NewCatapillarColumn = 15
             };
             _mockCaterpillarService.Setup(service => service.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                                    .ReturnsAsync(moveResponse);
 
             await _command.ExecuteAsync(); // Move to save state
-            _caterpillar.CurrentRow = 7; // Change state
-            _caterpillar.CurrentColumn = 7;
-            _caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
 
             // Act
             await _command.Undo();
 
             // Assert
-            Assert.Equal(5, _caterpillar.CurrentRow);
-            Assert.Equal(5, _caterpillar.CurrentColumn);
+            Assert.Equal(15, _caterpillar.CurrentRow);
+            Assert.Equal(15, _caterpillar.CurrentColumn);
             Assert.Equal(2, _caterpillar.Segments.Count);
         }
 

@@ -88,18 +88,18 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             {
                 case EventType.Moved:
                     RestorePreviousState();
-                    // Restore caterpillar position
-                    CaterpillarSimulation.caterpillarRow = previousRow;
-                    CaterpillarSimulation.caterpillarColumn = previousColumn;
-                    map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
 
                     break;
 
                 case EventType.Obstacle:
-                    await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
 
+                    await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
+                    RestorePreviousState();
                     break;
+
                 case EventType.Booster:
+
+                    RestorePreviousState();
 
                     var growShrinkResponse = new GrowShrinkCaterpillarResponse(); 
 
@@ -134,7 +134,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                     break;
 
                 case EventType.Spice:
-                    map[previousRow, previousColumn] = 'C';
+                    RestorePreviousState();
                     break;
 
                 case EventType.HorizontalCrossBoundary:

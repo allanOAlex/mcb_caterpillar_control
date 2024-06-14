@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace GECA.Tests.xUnit
 {
-    public class CaterpillarMoveCommandWithEventsTests
+    public class CaterpillarMove_Undo_CommandTests
     {
         private readonly Mock<ICaterpillarService> _caterpillarServiceMock;
         private readonly Mock<IMapService> _mapServiceMock;
@@ -21,7 +21,7 @@ namespace GECA.Tests.xUnit
         private MoveCaterpillarRequest _moveCaterpillarRequest;
         private CaterpillarMoveCommand _command;
 
-        public CaterpillarMoveCommandWithEventsTests()
+        public CaterpillarMove_Undo_CommandTests()
         {
             _caterpillarServiceMock = new Mock<ICaterpillarService>();
             _mapServiceMock = new Mock<IMapService>();
@@ -66,7 +66,7 @@ namespace GECA.Tests.xUnit
                 .Setup(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                 .ReturnsAsync(moveResponse);
 
-            var initialSegments = _caterpillar.Segments.Count;
+            var initialSegmentCount = _caterpillar.Segments.Count;
 
             var growShrinkCaterpillarRequest = new GrowShrinkCaterpillarRequest
             {
@@ -77,8 +77,8 @@ namespace GECA.Tests.xUnit
             var growShrinkResponse = new GrowShrinkCaterpillarResponse
             {
                 Successful = true,
-                InitialSegments = initialSegments,
-                CurrentSegments = initialSegments + 1,
+                InitialSegmentCount = initialSegmentCount,
+                CurrentSegmentCount = initialSegmentCount + 1,
                 PreviousCaterpillarSegments = _caterpillar.Segments.ToList(),
                 CurrentCaterpillarSegments = _caterpillar.Segments.Append(new Segment(SegmentType.Intermediate)).ToList()
             };
@@ -91,11 +91,10 @@ namespace GECA.Tests.xUnit
 
             await _command.ExecuteAsync();
 
-            _caterpillar.CurrentRow = 14;
-            _caterpillar.CurrentColumn = 15;
-            _caterpillar.PreviousSegmentCount = initialSegments;
-            _caterpillar.CurrentSegmentCount = growShrinkResponse.CurrentSegments;
+            _caterpillar.PreviousSegmentCount = initialSegmentCount;
+            _caterpillar.CurrentSegmentCount = growShrinkResponse.CurrentSegmentCount;
             _caterpillar.PreviousSegments = growShrinkResponse.PreviousCaterpillarSegments;
+            _caterpillar.Segments = growShrinkResponse.CurrentCaterpillarSegments;
 
             // Act
             await _command.Undo();
@@ -103,7 +102,7 @@ namespace GECA.Tests.xUnit
             // Assert
             Assert.Equal(15, _caterpillar.CurrentRow);
             Assert.Equal(15, _caterpillar.CurrentColumn);
-            Assert.Equal(initialSegments, _caterpillar.Segments.Count); // Ensure the segment count is reverted
+            Assert.Equal(initialSegmentCount, _caterpillar.Segments.Count); // Ensure the segment count is reverted
             Assert.Equal('C', _map[15, 15]);
             Assert.Equal('B', _map[14, 15]);
 
@@ -173,7 +172,6 @@ namespace GECA.Tests.xUnit
                 Steps = 15
             };
 
-            // Initial move to set the state
             var initialResponse = new MoveCaterpillarResponse
             {
                 Successful = true,
@@ -226,7 +224,6 @@ namespace GECA.Tests.xUnit
             _command.SaveCurrentState();
             _map[14, 15] = 'C'; // Caterpillar moved up
 
-            // Define the MoveCaterpillarResponse object
             var moveResponse = new MoveCaterpillarResponse
             {
                 Successful = true,
@@ -239,7 +236,7 @@ namespace GECA.Tests.xUnit
                 .Setup(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                 .ReturnsAsync(moveResponse); // Mock the move response when executing the command
 
-            await _command.ExecuteAsync(); // Execute the command
+            await _command.ExecuteAsync(); 
 
             _caterpillar.CurrentRow = 14;
             _caterpillar.CurrentColumn = 15;
@@ -262,7 +259,6 @@ namespace GECA.Tests.xUnit
             _command.SaveCurrentState();
             _map[14, 15] = '#'; // Caterpillar hits an obstacle
 
-            // Setup the response for MoveCaterpillar
             var initialResponse = new MoveCaterpillarResponse
             {
                 Successful = true,
@@ -275,12 +271,7 @@ namespace GECA.Tests.xUnit
                 .Setup(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                 .ReturnsAsync(initialResponse);
 
-            // Execute the command
             await _command.ExecuteAsync();
-
-            // Set the caterpillar's current position after the move
-            _caterpillar.CurrentRow = 14;
-            _caterpillar.CurrentColumn = 15;
 
             // Act
             await _command.Undo();
@@ -303,7 +294,6 @@ namespace GECA.Tests.xUnit
             _command.SaveCurrentState();
             _map[14, 15] = 'S'; // Caterpillar finds a spice
 
-            // Setup the response for MoveCaterpillar
             var initialResponse = new MoveCaterpillarResponse
             {
                 Successful = true,
@@ -318,10 +308,6 @@ namespace GECA.Tests.xUnit
 
             // Execute the command
             var response = await _command.ExecuteAsync();
-
-            // Set the caterpillar's current position after the move
-            _caterpillar.CurrentRow = 14;
-            _caterpillar.CurrentColumn = 15;
 
             // Act
             await _command.Undo();

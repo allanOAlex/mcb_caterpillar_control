@@ -6,8 +6,8 @@ namespace GECA.Client.Console.Application.Dtos
     {
         public bool CaterpillarGrown { get; set; }
         public bool CaterpillarShrunk { get; set; }
-        public int InitialSegments { get; set; }
-        public int CurrentSegments { get; set; }
+        public int InitialSegmentCount { get; set; }
+        public int CurrentSegmentCount { get; set; }
         public List<Segment> PreviousCaterpillarSegments { get; set; }
         public List<Segment> CurrentCaterpillarSegments { get; set; }
     }
