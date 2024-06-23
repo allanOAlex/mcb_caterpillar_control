@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GECA.Tests.xUnit": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

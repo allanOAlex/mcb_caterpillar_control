@@ -3,7 +3,6 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands;
-using GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers;
 using Moq;
 
 namespace GECA.Tests.xUnit
@@ -26,19 +25,20 @@ namespace GECA.Tests.xUnit
                 Segments = new List<Segment>
                 {
                     new Segment(SegmentType.Head),
-                    new Segment(SegmentType.Intermediate),
                     new Segment(SegmentType.Tail)
                 },
-                CurrentRow = 5,
-                CurrentColumn = 5
+                CurrentRow = 15,
+                CurrentColumn = 15
             };
-            _map = new char[10, 10];
+
+            _map = new char[30, 30];
+
             _moveCaterpillarRequest = new MoveCaterpillarRequest
             {
-                CurrentRow = 5,
-                CurrentColumn = 5,
-                NewRow = 6,
-                NewColumn = 6
+                CurrentRow = 15,
+                CurrentColumn = 15,
+                Direction = "UP",
+                Steps = 1
             };
 
             _command = new CaterpillarMoveCommand(_caterpillar, _map, _moveCaterpillarRequest, _mockCaterpillarService.Object, _mockMapService.Object);
@@ -51,9 +51,10 @@ namespace GECA.Tests.xUnit
             var moveResponse = new MoveCaterpillarResponse
             {
                 EventType = EventType.None,
-                NewCatapillarRow = 6,
-                NewCatapillarColumn = 6
+                NewCatapillarRow = 12,
+                NewCatapillarColumn = 15
             };
+
             _mockCaterpillarService.Setup(service => service.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                                    .ReturnsAsync(moveResponse);
 
@@ -61,8 +62,8 @@ namespace GECA.Tests.xUnit
             var result = await _command.ExecuteAsync();
 
             // Assert
-            Assert.Equal(6, _caterpillar.CurrentRow);
-            Assert.Equal(6, _caterpillar.CurrentColumn);
+            Assert.Equal(12, _caterpillar.CurrentRow);
+            Assert.Equal(15, _caterpillar.CurrentColumn);
             Assert.Equal(moveResponse, result);
         }
 
@@ -72,24 +73,23 @@ namespace GECA.Tests.xUnit
             // Arrange
             var moveResponse = new MoveCaterpillarResponse
             {
+                Successful = true,
                 EventType = EventType.Moved,
-                NewCatapillarRow = 6,
-                NewCatapillarColumn = 6
+                NewCatapillarRow = 14,
+                NewCatapillarColumn = 15
             };
             _mockCaterpillarService.Setup(service => service.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                                    .ReturnsAsync(moveResponse);
+
             await _command.ExecuteAsync(); // Move to save state
-            _caterpillar.CurrentRow = 7; // Change state
-            _caterpillar.CurrentColumn = 7;
-            _caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
 
             // Act
             await _command.Undo();
 
             // Assert
-            Assert.Equal(5, _caterpillar.CurrentRow);
-            Assert.Equal(5, _caterpillar.CurrentColumn);
-            Assert.Equal(3, _caterpillar.Segments.Count);
+            Assert.Equal(15, _caterpillar.CurrentRow);
+            Assert.Equal(15, _caterpillar.CurrentColumn);
+            Assert.Equal(2, _caterpillar.Segments.Count);
         }
 
         [Fact]
