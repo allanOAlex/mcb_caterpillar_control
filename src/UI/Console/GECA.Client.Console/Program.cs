@@ -14,8 +14,6 @@ using GECA.Client.Console.Infrastructure.Implementations.Services;
 using GECA.Client.Console.Shared;
 using Serilog;
 using Serilog.Formatting.Json;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-
 
 
 #region SerilogConfig
@@ -90,6 +88,7 @@ while (true)
             Console.WriteLine("Invalid input. Please enter a correct value.");
             Console.ResetColor();
         }
+
     } while (!validInput);
 
     Console.WriteLine("Enter number of steps:");

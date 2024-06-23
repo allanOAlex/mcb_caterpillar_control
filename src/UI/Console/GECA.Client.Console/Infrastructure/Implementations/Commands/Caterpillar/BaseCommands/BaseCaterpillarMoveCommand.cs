@@ -4,12 +4,6 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {

@@ -1,5 +1,4 @@
-﻿using GECA.Client.Console.Application.Abstractions.ICommand;
-using GECA.Client.Console.Application.Abstractions.Intefaces;
+﻿using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;

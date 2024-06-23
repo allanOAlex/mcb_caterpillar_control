@@ -4,7 +4,6 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Shared;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Services
 {
@@ -174,7 +173,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
 
             }
 
-            throw new NotImplementedException();
+            return new MoveCaterpillarResponse();
         }
 
         public async Task<GrowShrinkCaterpillarResponse> GrowShrinkCaterpillar(GrowShrinkCaterpillarRequest growShrinkCaterpillarRequest)

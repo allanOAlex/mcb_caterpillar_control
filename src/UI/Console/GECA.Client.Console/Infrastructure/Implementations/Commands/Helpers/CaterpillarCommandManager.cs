@@ -1,5 +1,4 @@
 ﻿using GECA.Client.Console.Application.Abstractions.ICommand;
-using GECA.Client.Console.Domain.Entities;
 using Serilog;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers

@@ -4,24 +4,19 @@ using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Tests.xUnit
 {
-    public class CaterpillarMove_Undo_CommandTests
+    public class CaterpillarMoveUndoCommandTests
     {
         private readonly Mock<ICaterpillarService> _caterpillarServiceMock;
         private readonly Mock<IMapService> _mapServiceMock;
-        private Caterpillar _caterpillar;
-        private char[,] _map;
+        private readonly Caterpillar _caterpillar;
+        private readonly char[,] _map;
         private MoveCaterpillarRequest _moveCaterpillarRequest;
-        private CaterpillarMoveCommand _command;
+        private readonly CaterpillarMoveCommand _command;
 
-        public CaterpillarMove_Undo_CommandTests()
+        public CaterpillarMoveUndoCommandTests()
         {
             _caterpillarServiceMock = new Mock<ICaterpillarService>();
             _mapServiceMock = new Mock<IMapService>();
@@ -30,7 +25,7 @@ namespace GECA.Tests.xUnit
             {
                 CurrentRow = 15,
                 CurrentColumn = 15,
-                Segments = new List<Segment> { new Segment(SegmentType.Head), new Segment(SegmentType.Tail) }
+                Segments = [new (SegmentType.Head), new (SegmentType.Tail)]
             };
 
             _map = new char[30, 30];
@@ -67,12 +62,6 @@ namespace GECA.Tests.xUnit
                 .ReturnsAsync(moveResponse);
 
             var initialSegmentCount = _caterpillar.Segments.Count;
-
-            var growShrinkCaterpillarRequest = new GrowShrinkCaterpillarRequest
-            {
-                Caterpillar = new CaterpillarDto { Caterpillar = _caterpillar },
-                Grow = true
-            };
 
             var growShrinkResponse = new GrowShrinkCaterpillarResponse
             {
@@ -135,7 +124,7 @@ namespace GECA.Tests.xUnit
             .ReturnsAsync(moveResponse);
 
             _command.SaveCurrentState();
-            var response = await _command.ExecuteAsync();
+            await _command.ExecuteAsync();
 
             var boundaryResponse = new MoveCaterpillarResponse
             {
@@ -180,7 +169,7 @@ namespace GECA.Tests.xUnit
                 NewCatapillarColumn = 0
             };
 
-            // Setup the sequence of moves
+            // Set up the sequence of moves
             _caterpillarServiceMock
                 .SetupSequence(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                 .ReturnsAsync(initialResponse);
@@ -307,7 +296,7 @@ namespace GECA.Tests.xUnit
                 .ReturnsAsync(initialResponse);
 
             // Execute the command
-            var response = await _command.ExecuteAsync();
+            await _command.ExecuteAsync();
 
             // Act
             await _command.Undo();
@@ -342,7 +331,7 @@ namespace GECA.Tests.xUnit
                 NewCatapillarColumn = 15
             };
 
-            // Setup the sequence of moves
+            // Set up the sequence of moves
             _caterpillarServiceMock
                 .SetupSequence(s => s.MoveCaterpillar(It.IsAny<char[,]>(), It.IsAny<MoveCaterpillarRequest>()))
                 .ReturnsAsync(initialResponse);

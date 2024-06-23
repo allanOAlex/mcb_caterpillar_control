@@ -3,7 +3,6 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands;
-using GECA.Client.Console.Infrastructure.Implementations.Commands.Helpers;
 using Moq;
 
 namespace GECA.Tests.xUnit
