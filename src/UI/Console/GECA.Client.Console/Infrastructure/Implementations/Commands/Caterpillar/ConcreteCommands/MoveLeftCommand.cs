@@ -1,10 +1,8 @@
-﻿using GECA.Client.Console.Application.Abstractions.ICommand;
-using GECA.Client.Console.Application.Abstractions.Intefaces;
+﻿using GECA.Client.Console.Application.Abstractions.Intefaces;
 using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
-using GECA.Client.Console.Infrastructure.Implementations.Interfaces;
 using GECA.Client.Console.Shared;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands

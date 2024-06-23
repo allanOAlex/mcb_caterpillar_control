@@ -4,7 +4,6 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Shared;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Services
 {
@@ -54,7 +53,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             try
             {
-                caterpillarDestroyed = true;
+                caterpillarDestroyed = false;
 
                 // Remove the caterpillar from the map
                 map[row, column] = 'C';
@@ -88,7 +87,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
         {
             try
             {
-                
+
                 int newRow = moveCaterpillarRequest.CurrentRow;
                 int newColumn = moveCaterpillarRequest.CurrentColumn;
 
@@ -115,11 +114,11 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                         return new MoveCaterpillarResponse { Successful = false, Message = "Invalid Direction." };
                 }
 
-                // Check if the new position is within the map boundaries
-                if (newRow < 0 || newRow >= map.GetLength(0) || newColumn < 0 || newColumn >= map.GetLength(1))
-                {
-                    return new MoveCaterpillarResponse { Successful = false, Message = "Cannot move. Reached map boundary.", EventType = EventType.HitMapBoundary };
-                }
+                //// Check if the new position is within the map boundaries
+                //if (newRow < 0 || newRow >= map.GetLength(0) || newColumn < 0 || newColumn >= map.GetLength(1))
+                //{
+                //    return new MoveCaterpillarResponse { Successful = false, Message = "Cannot move. Reached map boundary.", EventType = EventType.HitMapBoundary };
+                //}
 
                 // Check if the new position has an obstacle
                 if (map[newRow, newColumn] == '#')
@@ -131,25 +130,21 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                 map[moveCaterpillarRequest.CurrentRow, moveCaterpillarRequest.CurrentColumn] = '.';
 
                 // Check if the caterpillar encountered any items
-                char item = map[newRow, newColumn];
-                switch (item)
-                {
-                    case 'B':
-                        map[newRow, newColumn] = 'C';
-                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a booster!", EventType = EventType.Booster, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
+                CheckIfCaterpillarEncounteredItems(map, newRow, newColumn);
 
-                    case 'S':
-                        map[newRow, newColumn] = 'C';
-                        return new MoveCaterpillarResponse { Successful = true, Message = "Found a spice!", EventType = EventType.Spice, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
-
-                }
-
-                if (newRow == 0 || newRow == map.GetLength(0) - 1 || newColumn == 0 || newColumn == map.GetLength(1) - 1)
+                if (newRow == -1 || newRow == map.GetLength(0) || newColumn == -1 || newColumn == map.GetLength(1))
                 {
                     // Boundary crossing detected
                     EventType eventType = (newRow == 0 || newRow == map.GetLength(0) - 1) ? EventType.VerticalCrossBoundary : EventType.HorizontalCrossBoundary;
                     return new MoveCaterpillarResponse { Successful = true, Message = "Crossing Bounderies!", EventType = eventType, NewCatapillarRow = newRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
                 }
+
+                //if (newRow == 0 || newRow == map.GetLength(0) - 1 || newColumn == 0 || newColumn == map.GetLength(1) - 1)
+                //{
+                //    // Boundary crossing detected
+                //    EventType eventType = (newRow == 0 || newRow == map.GetLength(0) - 1) ? EventType.VerticalCrossBoundary : EventType.HorizontalCrossBoundary;
+                //    return new MoveCaterpillarResponse { Successful = true, Message = "Crossing Bounderies!", EventType = eventType, NewCatapillarRow = newRow, NewCatapillarColumn = moveCaterpillarRequest.CurrentColumn };
+                //}
 
                 // Update caterpillar's new position on the map
                 map[newRow, newColumn] = 'C';
@@ -163,10 +158,31 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
             }
         }
 
+        private static MoveCaterpillarResponse CheckIfCaterpillarEncounteredItems(char[,] map, int newRow, int newColumn)
+        {
+            char item = map[newRow, newColumn];
+            switch (item)
+            {
+                case 'B':
+                    map[newRow, newColumn] = 'C';
+                    return new MoveCaterpillarResponse { Successful = true, Message = "Found a booster!", EventType = EventType.Booster, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
+
+                case 'S':
+                    map[newRow, newColumn] = 'C';
+                    return new MoveCaterpillarResponse { Successful = true, Message = "Found a spice!", EventType = EventType.Spice, NewCatapillarRow = newRow, NewCatapillarColumn = newColumn };
+
+            }
+
+            return new MoveCaterpillarResponse();
+        }
+
         public async Task<GrowShrinkCaterpillarResponse> GrowShrinkCaterpillar(GrowShrinkCaterpillarRequest growShrinkCaterpillarRequest)
         {
             try
             {
+                var previousCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.ToList(); // Create a copy
+                AppConstants.PreviousCaterpillarSegments = previousCaterpillarSegments;
+
                 var initialSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count;
 
                 if (growShrinkCaterpillarRequest.Grow)
@@ -176,7 +192,15 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                     {
                         // Add a new segment to the caterpillar
                         growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Insert(1, new Segment(SegmentType.Intermediate)); // Insert after the head
-                        return new GrowShrinkCaterpillarResponse { Successful = true, CaterpillarGrown = true, InitialSegments = initialSegments, CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count };
+                        return new GrowShrinkCaterpillarResponse
+                        {
+                            Successful = true,
+                            CaterpillarGrown = true,
+                            InitialSegmentCount = initialSegments,
+                            CurrentSegmentCount = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count,
+                            PreviousCaterpillarSegments = AppConstants.PreviousCaterpillarSegments,
+                            CurrentCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments
+                        };
                     }
                     else
                     {
@@ -191,7 +215,15 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
                     {
                         // Remove the last segment from the caterpillar
                         growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.RemoveAt(growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments.Count - 1);
-                        return new GrowShrinkCaterpillarResponse { Successful = true, CaterpillarShrunk = true, InitialSegments = initialSegments, CurrentSegments = growShrinkCaterpillarRequest.Caterpillar.Segments.Count };
+                        return new GrowShrinkCaterpillarResponse 
+                        { 
+                            Successful = true, 
+                            CaterpillarShrunk = true, 
+                            InitialSegmentCount = initialSegments, 
+                            CurrentSegmentCount = growShrinkCaterpillarRequest.Caterpillar.Segments.Count,
+                            PreviousCaterpillarSegments = AppConstants.PreviousCaterpillarSegments,
+                            CurrentCaterpillarSegments = growShrinkCaterpillarRequest.Caterpillar.Caterpillar.Segments
+                        };
                     }
                     else
                     {

@@ -95,13 +95,9 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Services
 
         public async Task<PlaceCaterpillarResponse> PlaceCaterpillar(char[,] map)
         {
-            CaterpillarService caterpillarService = new(unitOfWork);
-            var caterpillarRow = await caterpillarService.GetCaterpillarRow();
-            var caterpillarColumn = await caterpillarService.GetCaterpillarColumn();
-
             // Place the caterpillar at the center of the map
-            caterpillarRow = map.GetLength(0) / 2;
-            caterpillarColumn = map.GetLength(1) / 2;
+            var caterpillarRow = map.GetLength(0) / 2;
+            var caterpillarColumn = map.GetLength(1) / 2;
             map[caterpillarRow, caterpillarColumn] = 'C';
 
             return new PlaceCaterpillarResponse

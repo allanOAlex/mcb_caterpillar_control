@@ -14,8 +14,6 @@ using GECA.Client.Console.Infrastructure.Implementations.Services;
 using GECA.Client.Console.Shared;
 using Serilog;
 using Serilog.Formatting.Json;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-
 
 
 #region SerilogConfig
@@ -90,6 +88,7 @@ while (true)
             Console.WriteLine("Invalid input. Please enter a correct value.");
             Console.ResetColor();
         }
+
     } while (!validInput);
 
     Console.WriteLine("Enter number of steps:");
@@ -113,7 +112,7 @@ while (true)
 
     moveCount++;
 
-    if (moveCount == 1)
+    if (moveCount == 1 || moveCount == 2 || moveCount == 3)
     {
         simulation.TryUndoRedo();
         DisplayMaps(asyncMap, simulation, size);
@@ -362,19 +361,19 @@ public class CaterpillarSimulation
                         if (growShrinkResponse.CaterpillarGrown)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"Caterpillar grown by {growShrinkResponse.CurrentSegments - growShrinkResponse.InitialSegments} sement(s)");
+                            Console.WriteLine($"Caterpillar grown by {growShrinkResponse.CurrentSegmentCount - growShrinkResponse.InitialSegmentCount} sement(s)");
                             Console.ResetColor();
                         }
                         else if (growShrinkResponse.CaterpillarShrunk)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"Caterpillar shrunk by {growShrinkResponse.InitialSegments - growShrinkResponse.CurrentSegments} sement(s)");
+                            Console.WriteLine($"Caterpillar shrunk by {growShrinkResponse.InitialSegmentCount - growShrinkResponse.CurrentSegmentCount} sement(s)");
                             Console.ResetColor();
                         }
 
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"Initial Segment Count: {growShrinkResponse.InitialSegments}");
-                        Console.WriteLine($"Current Segment Count: {growShrinkResponse.CurrentSegments}");
+                        Console.WriteLine($"Initial Segment Count: {growShrinkResponse.InitialSegmentCount}");
+                        Console.WriteLine($"Current Segment Count: {growShrinkResponse.CurrentSegmentCount}");
                         Console.ResetColor();
                     }
                     else
@@ -563,17 +562,25 @@ public class CaterpillarSimulation
 
         if (growShrinkResponse.Successful)
         {
+
+            AppConstants.CurrentSegmentCount = growShrinkResponse.CurrentSegmentCount;
+            AppConstants.PreviousSegmentCount = growShrinkResponse.InitialSegmentCount;
+            Caterpillar.CurrentSegmentCount = growShrinkResponse.CurrentSegmentCount;
+            Caterpillar.PreviousSegmentCount = growShrinkResponse.InitialSegmentCount;
+            Caterpillar.Segments = growShrinkResponse.CurrentCaterpillarSegments;
+            Caterpillar.PreviousSegments = growShrinkResponse.PreviousCaterpillarSegments;
+
             Console.ForegroundColor = ConsoleColor.Green;
             if (growShrinkResponse.CaterpillarGrown)
             {
-                Console.WriteLine($"Caterpillar grown by {growShrinkResponse.CurrentSegments - growShrinkResponse.InitialSegments} segment(s)");
+                Console.WriteLine($"Caterpillar grown by {growShrinkResponse.CurrentSegmentCount - growShrinkResponse.InitialSegmentCount} segment(s)");
             }
             else if (growShrinkResponse.CaterpillarShrunk)
             {
-                Console.WriteLine($"Caterpillar shrunk by {growShrinkResponse.InitialSegments - growShrinkResponse.CurrentSegments} segment(s)");
+                Console.WriteLine($"Caterpillar shrunk by {growShrinkResponse.InitialSegmentCount - growShrinkResponse.CurrentSegmentCount} segment(s)");
             }
-            Console.WriteLine($"Initial Segment Count: {growShrinkResponse.InitialSegments}");
-            Console.WriteLine($"Current Segment Count: {growShrinkResponse.CurrentSegments}");
+            Console.WriteLine($"Initial Segment Count: {growShrinkResponse.InitialSegmentCount}");
+            Console.WriteLine($"Current Segment Count: {growShrinkResponse.CurrentSegmentCount}");
             Console.ResetColor();
         }
         else

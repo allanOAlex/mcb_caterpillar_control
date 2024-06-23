@@ -4,11 +4,6 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands
 {
@@ -22,6 +17,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
         protected EventType eventType;
         protected int previousRow;
         protected int previousColumn;
+        protected char previousMapCell;
         protected List<Segment> previousSegments;
         protected List<Segment> newSegments;
 
@@ -38,70 +34,118 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
         public async Task Undo()
         {
-
+            var testSeg = previousSegments;
             var currentCaterpillarRow = caterpillar.CurrentRow;
             var currentCaterpillarCol = caterpillar.CurrentColumn;
-            map[currentCaterpillarRow, currentCaterpillarCol] = '.';
 
-            RestorePreviousState();
+            if (previousSegments == null )
+            {
+                previousSegments = caterpillar.PreviousSegments ?? caterpillar.Segments;
+            }
+
+            switch (eventType)
+            {
+                case EventType.Moved:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = '.';
+                    break;
+                case EventType.Obstacle:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = '#';
+                    break;
+                case EventType.Booster:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = 'B';
+                    break;
+                case EventType.Spice:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = 'S';
+                    break;
+                case EventType.HorizontalCrossBoundary:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = '.';
+                    break;
+                case EventType.VerticalCrossBoundary:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = '.';
+                    break;
+                case EventType.CrossBoundary:
+                    break;
+                case EventType.HitMapBoundary:
+                    map[currentCaterpillarRow, currentCaterpillarCol] = 'C';
+                    break;
+                case EventType.None:
+                    break;
+                default:
+                    break;
+            }
+            
+
+            //RestorePreviousState();
 
             // Handle specific event type reversion
             switch (eventType)
             {
                 case EventType.Moved:
-                    // Restore caterpillar position
-                    CaterpillarSimulation.caterpillarRow = previousRow;
-                    CaterpillarSimulation.caterpillarColumn = previousColumn;
-                    map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
-
-                    // Update current position with empty sapce
-
-                    // Restore caterpillar segments
-                    caterpillar.Segments = new List<Segment>(previousSegments);
+                    RestorePreviousState();
 
                     break;
 
                 case EventType.Obstacle:
-                    await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
 
+                    await caterpillarService.UnDestroyCaterpillar(map, previousRow, previousColumn);
+                    RestorePreviousState();
                     break;
+
                 case EventType.Booster:
+
+                    RestorePreviousState();
+
+                    var growShrinkResponse = new GrowShrinkCaterpillarResponse(); 
+
                     // Revert the caterpillar size change
-                    if (previousSegments.Count > newSegments.Count)
+                    if (caterpillar.CurrentSegmentCount > previousSegments.Count)
                     {
+                        GrowShrinkCaterpillarRequest growShrinkRequest = new()
+                        {
+                            Caterpillar = new CaterpillarDto { Caterpillar = caterpillar },
+                            Grow = false
+                        };
+
                         caterpillar.Segments.RemoveAt(caterpillar.Segments.Count - 1);
+
+                        growShrinkResponse =  await caterpillarService.GrowShrinkCaterpillar(growShrinkRequest);
                     }
-                    else if (previousSegments.Count < newSegments.Count)
+                    else if (caterpillar.CurrentSegmentCount < previousSegments.Count)
                     {
+                        GrowShrinkCaterpillarRequest growShrinkRequest = new()
+                        {
+                            Caterpillar = new CaterpillarDto { Caterpillar = caterpillar },
+                            Grow = true
+                        };
+
                         caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
+
+                        growShrinkResponse = await caterpillarService.GrowShrinkCaterpillar(growShrinkRequest);
                     }
-                    map[previousRow, previousColumn] = 'B';
+
+                    map[previousRow, previousColumn] = 'C';
+
                     break;
 
                 case EventType.Spice:
-                    map[previousRow, previousColumn] = 'S';
+                    RestorePreviousState();
                     break;
 
                 case EventType.HorizontalCrossBoundary:
                 case EventType.VerticalCrossBoundary:
-                    
-                    // Handle reverting boundary crossing by replicating the map back to its original state
-                    await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(new ReplicateMapRequest
-                    {
-                        Map = map,
-                        CaterpillarRow = previousRow,
-                        CaterpillarColumn = previousColumn,
-                        IsHorizontalMirroring = eventType == EventType.HorizontalCrossBoundary ? true : false,
-                    });
+
+                    RestorePreviousState();
+
                     break;
 
                 case EventType.HitMapBoundary:
-                    // Simply restoring the previous state might be enough
+                    RestorePreviousState();
                     break;
             }
 
             Log.Information("Undo executed for {CommandType}. Caterpillar Position reverted to: ({Row}, {Column}), Segments: {SegmentCount}",
                 GetType().Name, caterpillar.CurrentRow, caterpillar.CurrentColumn, caterpillar.Segments.Count);
+
             await Task.CompletedTask;
         }
 
@@ -112,18 +156,19 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                 GetType().Name, caterpillar.CurrentRow, caterpillar.CurrentColumn, caterpillar.Segments.Count);
         }
 
-        protected void SaveCurrentState()
+        public void SaveCurrentState()
         {
             previousRow = caterpillar.CurrentRow;
             previousColumn = caterpillar.CurrentColumn;
-            previousSegments = new List<Segment>(caterpillar.Segments);
+            //previousSegments = new List<Segment>(caterpillar.Segments);
+            previousMapCell = map[previousRow, previousColumn];
         }
 
         protected void RestorePreviousState()
         {
             caterpillar.CurrentRow = previousRow;
             caterpillar.CurrentColumn = previousColumn;
-            caterpillar.Segments = new List<Segment>(previousSegments);
+            map[previousRow, previousColumn] = previousMapCell;
         }
 
         public void LogCommandDetails(int currentCaterpillarRow, int currentCaterpillarCol)

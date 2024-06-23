@@ -3,23 +3,18 @@ using GECA.Client.Console.Application.Dtos;
 using GECA.Client.Console.Domain.Entities;
 using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
-using GECA.Client.Console.Shared;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
 {
-    public class CaterpillarMoveCommand : BaseCaterpillarMoveCommand
+    public class CaterpillarMoveCommand(
+        Domain.Entities.Caterpillar caterpillar,
+        char[,] map,
+        MoveCaterpillarRequest moveCaterpillarRequest,
+        ICaterpillarService caterpillarService,
+        IMapService mapService)
+        : BaseCaterpillarMoveCommand(caterpillar, map, moveCaterpillarRequest, caterpillarService, mapService)
     {
-        public CaterpillarMoveCommand(Domain.Entities.Caterpillar caterpillar, char[,] map, MoveCaterpillarRequest moveCaterpillarRequest, ICaterpillarService caterpillarService, IMapService mapService)
-        : base(caterpillar, map, moveCaterpillarRequest, caterpillarService, mapService)
-        {
-        }
-
         public override async Task<MoveCaterpillarResponse> ExecuteAsync()
         {
             SaveCurrentState();
@@ -35,6 +30,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
             caterpillar.PreviousColumn = moveCaterpillarRequest.CurrentColumn;
             caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
             caterpillar.CurrentColumn = moveResponse.NewCatapillarColumn;
+            eventType = moveResponse.EventType;
 
             switch (moveResponse.EventType)
             {
@@ -57,13 +53,6 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
                 case EventType.HorizontalCrossBoundary:
                 case EventType.VerticalCrossBoundary:
-                    await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(new ReplicateMapRequest
-                    {
-                        Map = map,
-                        CaterpillarRow = moveResponse.NewCatapillarRow,
-                        CaterpillarColumn = moveResponse.NewCatapillarColumn,
-                        IsHorizontalMirroring = moveResponse.EventType == EventType.HorizontalCrossBoundary ? true : false
-                    });
 
                     await HandleBoundaryCross(moveResponse);
 
@@ -88,14 +77,10 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
                 Map = map,
                 CaterpillarRow = moveResponse.NewCatapillarRow,
                 CaterpillarColumn = moveResponse.NewCatapillarColumn,
-                IsHorizontalMirroring = moveResponse.EventType == EventType.HorizontalCrossBoundary ? false : true  
+                IsHorizontalMirroring = moveResponse.EventType == EventType.HorizontalCrossBoundary  
             };
 
             await mapService.SingleStep_HorizaontalVertical_ReplicateMapAcrossBoundary(replicateMapRequest);
-
-            //// Update the caterpillar's position based on the new map after crossing the boundary
-            //caterpillar.CurrentRow = moveResponse.NewCatapillarRow;
-            //caterpillar.CurrentColumn = moveResponse.NewCatapillarColumn;
 
             Log.Information("{DateTime}: Caterpillar crossed boundary. New Position: ({Row}, {Column})",
                 DateTime.Now, caterpillar.CurrentRow, caterpillar.CurrentColumn);
@@ -103,10 +88,8 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
         private void HandleMapBoundaryHit()
         {
-            // Caterpillar hits the map boundary, so we reset it to the previous position
-            RestorePreviousState();
             map[previousRow, previousColumn] = 'C';
-
+            RestorePreviousState();
             Log.Information("{DateTime}: Caterpillar hit map boundary. Reset to Previous Position: ({Row}, {Column})",
                 DateTime.Now, caterpillar.CurrentRow, caterpillar.CurrentColumn);
         }
